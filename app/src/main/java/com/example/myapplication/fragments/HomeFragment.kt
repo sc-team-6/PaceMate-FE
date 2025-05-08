@@ -33,53 +33,7 @@ class HomeFragment : Fragment() {
         val currentDate = dateFormat.format(Date())
         binding.tvDate.text = currentDate
 
-        // Set circular progress
-        binding.circularProgress.setProgress(55)
-        
-        // Set status text based on progress
-        updateStatusText(55)
-        
-        // Set min, max, and alert levels
-        binding.tvMin.text = "30%"
-        binding.tvAlertLevel.text = "80%"
-        binding.tvMax.text = "55%"
-        
-        // Set advice text
-        binding.tvAdvice.text = "Things are speeding up - slow down and take a breath."
-        
-        // Set highest value
-        binding.tvHighestValue.text = "55%"
-        
-        // Set usage stats
-        binding.tvTotalTime.text = "00h 52min"
-        binding.tvLowTime.text = "00h 52min"
-        binding.tvScroll.text = "1m"
-        
-        // Set drop-down click listener
-        binding.ivDropdown.setOnClickListener {
-            toggleAlertSection()
-        }
-    }
-    
-    private fun updateStatusText(progress: Int) {
-        val statusText = when {
-            progress < 30 -> "Calm"
-            progress < 60 -> "Warming Up"
-            progress < 80 -> "Getting Hot"
-            else -> "Overheated"
-        }
-        binding.tvStatus.text = statusText
-    }
-    
-    private fun toggleAlertSection() {
-        val isVisible = binding.cardYoutube.visibility == View.VISIBLE
-        val newVisibility = if (isVisible) View.GONE else View.VISIBLE
-        
-        binding.cardYoutube.visibility = newVisibility
-        binding.cardUnhealthy.visibility = newVisibility
-        
-        // Rotate dropdown icon
-        binding.ivDropdown.rotation = if (isVisible) 0f else 180f
+        // 다른 UI 설정은 XML에서 이미 설정되어 있으므로 필요한 경우에만 코드로 업데이트
     }
 
     override fun onDestroyView() {

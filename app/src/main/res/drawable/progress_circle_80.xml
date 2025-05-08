@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="200dp"
-    android:height="200dp"
+    android:width="300dp"
+    android:height="300dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
     
+    <!-- 배경 원 (회색) -->
     <path
         android:pathData="M50,50 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0"
-        android:strokeWidth="10"
-        android:strokeColor="#F0F0F0"
+        android:strokeWidth="5"
+        android:strokeColor="#EEEEEE"
         android:strokeLineCap="round" />
     
+    <!-- 프로그레스 원 (노란색) - 56% 정도 그려짐 -->
     <path
-        android:pathData="M50,5 A45,45 0 1,1 15.5,80.5"
-        android:strokeWidth="10"
-        android:strokeColor="@color/mint_alert"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000" />
+        android:pathData="M50,5 A45,45 0 0,1 95,50 A45,45 0 0,1 73,88"
+        android:strokeWidth="5"
+        android:strokeColor="@color/yellow_background"
+        android:strokeLineCap="round" />
 </vector>

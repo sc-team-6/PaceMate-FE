@@ -1,451 +1,423 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    android:fillViewport="true"
-    android:fitsSystemWindows="true">
+    android:fillViewport="true">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout 
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Date Bar -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/date_bar"
+        <!-- 상단 노란색 배경 영역 -->
+        <View
+            android:id="@+id/yellow_background"
             android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="@color/yellow_background"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/union_container" />
+
+        <!-- 상단 날짜 영역 -->
+        <TextView
+            android:id="@+id/tv_date"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:background="#F5F9F7"
-            app:layout_constraintTop_toTopOf="parent">
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="20dp"
+            android:text="Thursday, May 8, 2025"
+            android:textColor="#333333"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/tv_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Monday, April 8, 2025"
-                android:textColor="#82C4A9"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+        <!-- 구분선 -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="8dp"
+            android:background="#40000000"
+            app:layout_constraintTop_toBottomOf="@id/tv_date" />
 
-            <ImageView
-                android:id="@+id/iv_calendar"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_calendar"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="#82C4A9" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Overrun Score Section -->
+        <!-- Overrun Score 타이틀 -->
         <TextView
             android:id="@+id/tv_overrun_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="24dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="16dp"
             android:text="Overrun Score"
-            android:textColor="@color/black"
-            android:textSize="24sp"
+            android:textColor="#333333"
+            android:textSize="22sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/date_bar" />
+            app:layout_constraintTop_toBottomOf="@id/divider" />
 
         <TextView
             android:id="@+id/tv_overrun_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginStart="20dp"
             android:text="from the Past Hour"
-            android:textColor="#7F7F7F"
-            android:textSize="14sp"
+            android:textColor="#99333333"
+            android:textSize="16sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tv_overrun_title" />
 
-        <!-- Circular Progress -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/circular_progress_container"
+        <!-- Union 컨테이너 (PNG + 내용) -->
+        <FrameLayout
+            android:id="@+id/union_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:paddingBottom="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tv_overrun_subtitle">
 
-            <com.example.myapplication.views.CircularProgressView
-                android:id="@+id/circular_progress"
-                android:layout_width="270dp"
-                android:layout_height="270dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/tv_percentage"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="55%"
-                android:textColor="@color/black"
-                android:textSize="56sp"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="@id/circular_progress"
-                app:layout_constraintEnd_toEndOf="@id/circular_progress"
-                app:layout_constraintStart_toStartOf="@id/circular_progress"
-                app:layout_constraintTop_toTopOf="@id/circular_progress"
-                app:layout_constraintVertical_bias="0.35" />
-
-            <TextView
-                android:id="@+id/tv_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_status_pill"
-                android:paddingStart="20dp"
-                android:paddingTop="8dp"
-                android:paddingEnd="20dp"
-                android:paddingBottom="8dp"
-                android:text="Warming Up"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                app:layout_constraintEnd_toEndOf="@id/circular_progress"
-                app:layout_constraintStart_toStartOf="@id/circular_progress"
-                app:layout_constraintTop_toBottomOf="@id/tv_percentage" />
-
-            <ImageView
-                android:id="@+id/iv_hamster"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_marginTop="16dp"
-                app:layout_constraintEnd_toEndOf="@id/circular_progress"
-                app:layout_constraintStart_toStartOf="@id/circular_progress"
-                app:layout_constraintTop_toBottomOf="@id/tv_status" />
-
-            <!-- Min, Max, and Alert Level -->
-            <TextView
-                android:id="@+id/tv_min"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="30%"
-                android:textColor="@color/black"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@id/tv_alert_level"
-                app:layout_constraintHorizontal_chainStyle="spread_inside"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/circular_progress" />
-
-            <TextView
-                android:id="@+id/tv_min_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="MIN"
-                android:textColor="#7F7F7F"
-                android:textSize="12sp"
-                app:layout_constraintEnd_toEndOf="@id/tv_min"
-                app:layout_constraintStart_toStartOf="@id/tv_min"
-                app:layout_constraintTop_toBottomOf="@id/tv_min" />
-
-            <TextView
-                android:id="@+id/tv_alert_level"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="80%"
-                android:textColor="@color/black"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@id/tv_max"
-                app:layout_constraintStart_toEndOf="@id/tv_min"
-                app:layout_constraintTop_toBottomOf="@id/circular_progress" />
-
-            <TextView
-                android:id="@+id/tv_alert_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Alert Level"
-                android:textColor="#7F7F7F"
-                android:textSize="12sp"
-                app:layout_constraintEnd_toEndOf="@id/tv_alert_level"
-                app:layout_constraintStart_toStartOf="@id/tv_alert_level"
-                app:layout_constraintTop_toBottomOf="@id/tv_alert_level" />
-
-            <TextView
-                android:id="@+id/tv_max"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="55%"
-                android:textColor="@color/black"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/tv_alert_level"
-                app:layout_constraintTop_toBottomOf="@id/circular_progress" />
-
-            <TextView
-                android:id="@+id/tv_max_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="MAX"
-                android:textColor="#7F7F7F"
-                android:textSize="12sp"
-                app:layout_constraintEnd_toEndOf="@id/tv_max"
-                app:layout_constraintStart_toStartOf="@id/tv_max"
-                app:layout_constraintTop_toBottomOf="@id/tv_max" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Advice Text -->
-        <TextView
-            android:id="@+id/tv_advice"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="16dp"
-            android:text="Things are speeding up - slow down and take a breath."
-            android:textAlignment="center"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            app:layout_constraintTop_toBottomOf="@id/circular_progress_container" />
-
-        <!-- Today's Alert Section -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/alert_section"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="24dp"
-            app:layout_constraintTop_toBottomOf="@id/tv_advice">
-
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/alert_header"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toTopOf="parent">
+                android:layout_height="wrap_content">
 
-                <TextView
-                    android:id="@+id/tv_alert_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Today's Alert"
-                    android:textColor="@color/black"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
+                <!-- Union PNG 배경 -->
+
+                <!-- 노란색 아래 배경 -->
+
+                <!-- 퍼센트 텍스트 -->
+                <ImageView
+                    android:id="@+id/union_background"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/union"
+                    app:layout_constraintDimensionRatio="900:650"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <ImageView
-                    android:id="@+id/iv_dropdown"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_dropdown"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <!-- YouTube Alert Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/card_youtube"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                app:layout_constraintTop_toBottomOf="@id/alert_header">
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/tv_percentage"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="16dp">
+                    android:text="56%"
+                    android:textColor="#000000"
+                    android:textSize="50sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:layout_marginBottom="60dp"/>
 
-                    <ImageView
-                        android:id="@+id/iv_youtube"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_youtube"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                <!-- 상태 텍스트 (Warming Up) -->
+                <TextView
+                    android:id="@+id/tv_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/warming_up_background"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="10dp"
+                    android:text="Warming Up"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tv_percentage" />
 
-                    <TextView
-                        android:id="@+id/tv_highest"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="highest"
-                        android:textColor="#7F7F7F"
-                        android:textSize="14sp"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </FrameLayout>
 
-                    <TextView
-                        android:id="@+id/tv_highest_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="55%"
-                        android:textColor="#FFCC00"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/tv_highest" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-            </androidx.cardview.widget.CardView>
+        <!-- 다람쥐와 휴대폰 이미지를 위한 FrameLayout -->
+        <FrameLayout
+            android:id="@+id/hamster_phone_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="@id/union_container"
+            app:layout_constraintBottom_toBottomOf="@id/union_container">
 
-            <!-- Unhealthy Usage Pattern Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/card_unhealthy"
+            <!-- 다람쥐 이미지 -->
+            <ImageView
+                android:id="@+id/iv_hamster"
+                android:layout_width="160dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center_horizontal|bottom"
+                android:layout_marginBottom="0dp"
+                android:src="@drawable/iv_hamster"
+                android:elevation="10dp"
+                android:translationZ="10dp" />
+
+            <!-- 휴대폰 이미지 -->
+            <ImageView
+                android:id="@+id/iv_phone"
+                android:layout_width="200dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center_horizontal|bottom"
+                android:layout_marginBottom="0dp"
+                android:src="@drawable/iv_phone"
+                android:elevation="1dp"
+                android:translationZ="11dp"
+                android:zAdjustment="top" />
+        </FrameLayout>
+
+        <!-- Min, Max, Alert Level 섹션 -->
+        <LinearLayout
+            android:id="@+id/stats_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="16dp"
+            android:layout_marginTop="16dp"
+            android:background="@color/white"
+            app:layout_constraintTop_toBottomOf="@id/union_container">
+
+            <!-- MIN -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_min"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="30%"
+                    android:textColor="#333333"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_min_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MIN"
+                    android:textColor="#888888"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Alert Level -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/tv_alert_level"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="80%"
+                    android:textColor="#333333"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_alert_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Alert Level"
+                    android:textColor="#888888"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- MAX -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/tv_max"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="56%"
+                    android:textColor="#FFD700"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_max_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MAX"
+                    android:textColor="#888888"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 조언 텍스트 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/advice_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="32dp"
+            app:cardElevation="2dp"
+            app:layout_constraintTop_toBottomOf="@id/stats_container">
+
+            <TextView
+                android:id="@+id/tv_advice"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                app:layout_constraintTop_toBottomOf="@id/card_youtube">
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="24dp"
+                android:text="Things are speeding up - slow down and take a breath."
+                android:textAlignment="center"
+                android:textColor="#333333"
+                android:textSize="16sp" />
+        </androidx.cardview.widget.CardView>
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+        <!-- 앱 사용량 리스트 섹션 -->
+        <LinearLayout
+            android:id="@+id/app_usage_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp"
+            app:layout_constraintTop_toBottomOf="@id/advice_card">
 
-                    <TextView
-                        android:id="@+id/tv_unhealthy_title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
-                        android:text="We've noticed an unhealthy usage pattern."
-                        android:textColor="@color/black"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+            <!-- YouTube -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="16dp">
 
-                    <TextView
-                        android:id="@+id/tv_unhealthy_desc"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp"
-                        android:layout_marginTop="8dp"
-                        android:text="Unhealthy usage can have a bigger impact on your dopamine levels."
-                        android:textColor="#7F7F7F"
-                        android:textSize="14sp"
-                        app:layout_constraintTop_toBottomOf="@id/tv_unhealthy_title" />
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_youtube"
+                    android:padding="0dp"
+                    android:background="@drawable/rounded_square_background"
+                    android:backgroundTint="#FF0000"
+                    app:tint="#FFFFFF" />
 
-                    <!-- Screen Time Stats -->
-                    <LinearLayout
-                        android:id="@+id/ll_stats"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:orientation="horizontal"
-                        app:layout_constraintTop_toBottomOf="@id/tv_unhealthy_desc">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="Youtube"
+                    android:textColor="#333333"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="56%"
+                    android:textColor="#333333"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-                            <TextView
-                                android:id="@+id/tv_total_time"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="00h 52min"
-                                android:textColor="@color/black"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#EEEEEE" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Total Screen time"
-                                android:textColor="#7F7F7F"
-                                android:textSize="12sp" />
-                        </LinearLayout>
+            <!-- TikTok -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="16dp">
 
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical">
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_time"
+                    android:padding="8dp"
+                    android:background="@drawable/rounded_square_background"
+                    android:backgroundTint="#000000"
+                    app:tint="#FFFFFF" />
 
-                            <TextView
-                                android:id="@+id/tv_low_time"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="00h 52min"
-                                android:textColor="@color/black"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="TikTok"
+                    android:textColor="#333333"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="In a low"
-                                android:textColor="#7F7F7F"
-                                android:textSize="12sp" />
-                        </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="40%"
+                    android:textColor="#333333"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical">
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#EEEEEE" />
 
-                            <TextView
-                                android:id="@+id/tv_scroll"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="1m"
-                                android:textColor="@color/black"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
+            <!-- Instagram -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="16dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Scroll length"
-                                android:textColor="#7F7F7F"
-                                android:textSize="12sp" />
-                        </LinearLayout>
-                    </LinearLayout>
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/rounded_square_background"
+                    android:backgroundTint="#E1306C"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_settings"
+                    app:tint="#FFFFFF" />
 
-                    <!-- Warning About Scheduled Time -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="16dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="16dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/ll_stats">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="Instagram"
+                    android:textColor="#333333"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_warning"
-                            app:tint="#FFCC00" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="20%"
+                    android:textColor="#333333"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="You used your phone during a key scheduled time."
-                            android:textColor="@color/black"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-                </androidx.constraintlayout.widget.ConstraintLayout>
-            </androidx.cardview.widget.CardView>
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Bottom padding -->
+        <!-- 여백 추가 (하단 네비게이션바 영역) -->
         <View
             android:layout_width="match_parent"
-            android:layout_height="24dp"
-            app:layout_constraintTop_toBottomOf="@id/alert_section" />
+            android:layout_height="70dp"
+            app:layout_constraintTop_toBottomOf="@id/app_usage_list" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

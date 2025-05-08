@@ -39,4 +39,7 @@
     <color name="status_red">#E53935</color>
     <color name="background_light">#F5F9F7</color>
     <color name="text_secondary">#7F7F7F</color>
+    
+    <!-- 노란색 배경 -->
+    <color name="yellow_background">#FFDE57</color>
 </resources>
