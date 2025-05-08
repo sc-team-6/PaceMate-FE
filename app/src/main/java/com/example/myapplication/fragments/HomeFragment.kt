@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.example.myapplication.databinding.FragmentHomeBinding
 import java.text.SimpleDateFormat
@@ -19,7 +20,9 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        return binding.root
+        // ConstraintLayout을 반환하도록 변경 (새로운 루트 요소 타입)
+        val rootView = binding.root as ConstraintLayout
+        return rootView
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
