@@ -175,7 +175,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:paddingHorizontal="20dp"
-            android:paddingVertical="16dp"
+            android:paddingVertical="5dp"
             android:layout_marginTop="16dp"
             android:background="@color/white"
             app:layout_constraintTop_toBottomOf="@id/union_container">
@@ -185,7 +185,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
 
                 <TextView
                     android:id="@+id/tv_min"
@@ -237,7 +238,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:gravity="end">
+                android:gravity="center_horizontal">
 
                 <TextView
                     android:id="@+id/tv_max"
@@ -264,22 +265,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="24dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="32dp"
-            app:cardElevation="2dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp"
+            android:backgroundTint="#FAFAFA"
+            app:cardCornerRadius="18dp"
             app:layout_constraintTop_toBottomOf="@id/stats_container">
 
             <TextView
                 android:id="@+id/tv_advice"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="24dp"
-                android:paddingVertical="24dp"
-                android:text="Things are speeding up - slow down and take a breath."
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:text="@string/advice_text"
                 android:textAlignment="center"
                 android:textColor="#333333"
-                android:textSize="16sp" />
+                android:textSize="12sp"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:bufferType="spannable" />
         </androidx.cardview.widget.CardView>
 
         <!-- 앱 사용량 리스트 섹션 -->
@@ -288,127 +293,172 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="20dp"
             app:layout_constraintTop_toBottomOf="@id/advice_card">
 
             <!-- YouTube -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="16dp">
+                android:gravity="center_vertical"
+                android:paddingVertical="12dp">
 
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
                     android:src="@drawable/ic_youtube"
-                    android:padding="0dp"
-                    android:background="@drawable/rounded_square_background"
-                    android:backgroundTint="#FF0000"
-                    app:tint="#FFFFFF" />
+                    android:padding="0dp" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
                     android:text="Youtube"
-                    android:textColor="#333333"
-                    android:textSize="16sp"
+                    android:textColor="#6B3A00"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="3dp"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginHorizontal="12dp"
+                    android:background="@drawable/dotted_line"
+                    android:layerType="software" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="56%"
-                    android:textColor="#333333"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textColor="#6B3A00"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:paddingHorizontal="4dp" />
             </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#EEEEEE" />
 
             <!-- TikTok -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="16dp">
+                android:gravity="center_vertical"
+                android:paddingVertical="12dp">
 
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/ic_time"
-                    android:padding="8dp"
-                    android:background="@drawable/rounded_square_background"
-                    android:backgroundTint="#000000"
-                    app:tint="#FFFFFF" />
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:src="@drawable/ic_tiktok"
+                    android:padding="0dp" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
                     android:text="TikTok"
-                    android:textColor="#333333"
-                    android:textSize="16sp"
+                    android:textColor="#6B3A00"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="3dp"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginHorizontal="12dp"
+                    android:background="@drawable/dotted_line"
+                    android:layerType="software" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="40%"
-                    android:textColor="#333333"
-                    android:textSize="16sp"
+                    android:textColor="#6B3A00"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
             </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#EEEEEE" />
 
             <!-- Instagram -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="16dp">
+                android:gravity="center_vertical"
+                android:paddingVertical="12dp">
 
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/rounded_square_background"
-                    android:backgroundTint="#E1306C"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_settings"
-                    app:tint="#FFFFFF" />
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:src="@drawable/ic_instagram"
+                    android:padding="0dp" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
                     android:text="Instagram"
-                    android:textColor="#333333"
-                    android:textSize="16sp"
+                    android:textColor="#6B3A00"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="3dp"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginHorizontal="12dp"
+                    android:background="@drawable/dotted_line"
+                    android:layerType="software" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="20%"
-                    android:textColor="#333333"
-                    android:textSize="16sp"
+                    android:textColor="#6B3A00"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- e-football -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="12dp">
+
+                <ImageView
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:src="@drawable/ic_football"
+                    android:padding="0dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="e-football"
+                    android:textColor="#6B3A00"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="3dp"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginHorizontal="12dp"
+                    android:background="@drawable/dotted_line"
+                    android:layerType="software" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="13%"
+                    android:textColor="#6B3A00"
+                    android:textSize="17sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>

@@ -20,4 +20,5 @@
     <string name="accessibility_service_description">
         외부 스크롤 감지를 위한 접근성 서비스입니다.
     </string>
+    <string name="advice_text">Things are speeding up - <b>Slow down and take a breath</b></string>
 </resources>
