@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <!-- Permission Layout -->
+    <LinearLayout
+        android:id="@+id/permission_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_location"
+            app:tint="?attr/colorError" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="위치 권한이 필요합니다"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="위치 정보를 사용하려면 권한을 허용해주세요"
+            android:textAlignment="center"
+            android:alpha="0.8"
+            android:layout_marginTop="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/request_permission_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="위치 권한 요청"
+            android:layout_marginTop="24dp" />
+    </LinearLayout>
+
+    <!-- Content Layout -->
+    <LinearLayout
+        android:id="@+id/content_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardElevation="4dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="?attr/colorTertiaryContainer">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_location"
+                    app:tint="?attr/colorTertiary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="현재 위치"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="GPS 기반 위치 정보"
+                        android:textSize="14sp"
+                        android:alpha="0.7" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Loading Layout -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/loading_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardElevation="4dp"
+            app:cardCornerRadius="16dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="24dp">
+
+                <ProgressBar
+                    android:layout_width="48dp"
+                    android:layout_height="48dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="위치 정보를 가져오는 중..."
+                    android:textSize="16sp"
+                    android:layout_marginTop="16dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Location Info -->
+        <LinearLayout
+            android:id="@+id/location_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="24dp"
+            android:visibility="gone">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardElevation="4dp"
+                app:cardCornerRadius="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="위도"
+                            android:textSize="14sp"
+                            android:alpha="0.7" />
+
+                        <TextView
+                            android:id="@+id/latitude_text"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="0.0"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textAlignment="viewEnd"
+                            android:textColor="?attr/colorPrimary" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorOutline"
+                        android:alpha="0.2"
+                        android:layout_marginVertical="16dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="경도"
+                            android:textSize="14sp"
+                            android:alpha="0.7" />
+
+                        <TextView
+                            android:id="@+id/longitude_text"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="0.0"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textAlignment="viewEnd"
+                            android:textColor="?attr/colorPrimary" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorOutline"
+                        android:alpha="0.2"
+                        android:layout_marginVertical="16dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="고도"
+                            android:textSize="14sp"
+                            android:alpha="0.7" />
+
+                        <TextView
+                            android:id="@+id/altitude_text"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="0 m"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textAlignment="viewEnd"
+                            android:textColor="?attr/colorPrimary" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/colorOutline"
+                        android:alpha="0.2"
+                        android:layout_marginVertical="16dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="정확도"
+                            android:textSize="14sp"
+                            android:alpha="0.7" />
+
+                        <TextView
+                            android:id="@+id/accuracy_text"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="0 m"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textAlignment="viewEnd"
+                            android:textColor="?attr/colorSecondary" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

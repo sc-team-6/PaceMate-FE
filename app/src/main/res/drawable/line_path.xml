@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="400dp"
+    android:viewportWidth="240"
+    android:viewportHeight="400">
+    
+    <path
+        android:pathData="M20,40 Q80,150 120,230 T220,380"
+        android:strokeWidth="2"
+        android:strokeColor="@color/mint_primary"
+        android:fillColor="#00000000"/>
+    
+    <!-- 작은 원 점 -->
+    <path
+        android:pathData="M120,230 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"
+        android:fillColor="@color/mint_primary"/>
+</vector>

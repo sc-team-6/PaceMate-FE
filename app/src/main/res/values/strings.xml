@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="tab_usage">사용시간</string>
+    <string name="tab_screen">화면 상태</string>
+    <string name="tab_location">위치</string>
+    <string name="tab_time">현재 시간</string>
+    <string name="tab_scroll">스크롤</string>
+    
+    <!-- 새로 추가한 문자열 -->
+    <string name="nav_home">홈</string>
+    <string name="nav_report">리포트</string>
+    <string name="nav_settings">설정</string>
+    <string name="report_title">사용 통계 리포트</string>
+    <string name="permission_title">앱 사용 통계를 보려면 권한이 필요합니다</string>
+    <string name="permission_message">이 기능을 사용하려면 사용 통계 접근 권한을 허용해주세요.</string>
+    <string name="permission_button">권한 설정</string>
+    <string name="refresh">새로고침</string>
+
+    <string name="accessibility_service_description">
+        외부 스크롤 감지를 위한 접근성 서비스입니다.
+    </string>
+</resources>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:gravity="center_vertical">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/color_indicator"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        android:layout_marginEnd="8dp"/>
+
+    <TextView
+        android:id="@+id/app_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="앱 이름"
+        android:textColor="@android:color/black"
+        android:textSize="14sp"
+        android:ellipsize="end"
+        android:maxLines="1"/>
+
+    <TextView
+        android:id="@+id/app_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0분"
+        android:textColor="@android:color/black"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginStart="8dp"/>
+
+</LinearLayout>
