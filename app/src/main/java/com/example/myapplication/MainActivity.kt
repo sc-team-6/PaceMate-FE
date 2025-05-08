@@ -110,8 +110,8 @@ class MainActivity : AppCompatActivity() {
         val icon = item.findViewById<ImageView>(getIconIdForItem(item))
         val text = item.findViewById<TextView>(getTextIdForItem(item))
         
-        icon.setColorFilter(ContextCompat.getColor(this, R.color.mint_primary))
-        text.setTextColor(ContextCompat.getColor(this, R.color.mint_primary))
+        icon.setColorFilter(Color.parseColor("#70BCA4"))
+        text.setTextColor(Color.parseColor("#70BCA4"))
     }
     
     private fun setNavItemInactive(item: LinearLayout) {
@@ -119,8 +119,8 @@ class MainActivity : AppCompatActivity() {
         val icon = item.findViewById<ImageView>(getIconIdForItem(item))
         val text = item.findViewById<TextView>(getTextIdForItem(item))
         
-        icon.setColorFilter(Color.parseColor("#C0C0C0"))
-        text.setTextColor(Color.parseColor("#C0C0C0"))
+        icon.setColorFilter(Color.parseColor("#EBEBEB"))
+        text.setTextColor(Color.parseColor("#EBEBEB"))
     }
     
     private fun getIconIdForItem(item: LinearLayout): Int {
