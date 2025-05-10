@@ -75,7 +75,7 @@
                 android:id="@+id/icon_alert"
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:src="@drawable/ic_warning"
+                android:src="@drawable/ic_alert"
                 app:tint="#EBEBEB" />
 
             <TextView

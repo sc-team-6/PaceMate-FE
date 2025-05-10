@@ -7,147 +7,193 @@
     android:background="@android:color/white"
     android:padding="32dp">
 
+    <!-- Guidelines to position elements -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline30Percent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.25" />
+
+    <!-- Images above the title text -->
     <ImageView
         android:id="@+id/ivPhoneHamster"
-        android:layout_width="wrap_content"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:contentDescription="Phone with hamster"
         android:src="@drawable/iv_phone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toTopOf="@id/guideline30Percent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="10dp" />
 
     <ImageView
         android:id="@+id/ivHamster"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="110dp"
         android:contentDescription="Hamster"
         android:src="@drawable/iv_hamster"
-        app:layout_constraintTop_toTopOf="@id/ivPhoneHamster"
+        app:layout_constraintBottom_toTopOf="@id/ivPhoneHamster"
         app:layout_constraintStart_toStartOf="@id/ivPhoneHamster"
         app:layout_constraintEnd_toEndOf="@id/ivPhoneHamster"
-        app:layout_constraintBottom_toBottomOf="@id/ivPhoneHamster" />
+        android:layout_marginBottom="-75dp" />
 
+    <!-- Title text positioned at 30% from top -->
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="WHAT IS OVERRUN?"
-        android:textSize="24sp"
+        android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="@color/mint_text"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/ivPhoneHamster"
+        app:layout_constraintTop_toTopOf="@id/guideline30Percent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <!-- Description text below the title -->
     <TextView
         android:id="@+id/tvOverrunScoreDesc"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="The Overrun Score reflects your screen time and usage patterns. Here's what to watch out for:"
         android:textSize="16sp"
         android:textColor="@color/mint_secondary_text"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="30dp"
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <LinearLayout
+    <!-- Warning container below description - Now using a CardView for the white background -->
+    <androidx.cardview.widget.CardView
         android:id="@+id/warningContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="20dp"
+        app:cardCornerRadius="0dp"
+        app:cardElevation="0dp"
+        app:contentPadding="0dp"
+        app:cardBackgroundColor="@android:color/transparent"
         app:layout_constraintTop_toBottomOf="@id/tvOverrunScoreDesc"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-
+        
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-            
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_warning"
-                android:tint="@color/mint_alert" />
-                
-            <TextView
+            android:orientation="vertical"
+            android:background="@drawable/card_border">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Long, repetitive scrolling"
-                android:textSize="16sp"
-                android:textColor="#333333"
-                android:layout_marginStart="16dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-            
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_warning"
-                android:tint="@color/mint_alert" />
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:gravity="center_vertical">
                 
-            <TextView
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_warning"
+                    android:padding="4dp" />
+                    
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Long, repetitive scrolling"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:layout_marginStart="16dp"
+                    android:gravity="center_vertical" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#EEEEEE" />
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Extended use of high-risk apps"
-                android:textSize="16sp"
-                android:textColor="#333333"
-                android:layout_marginStart="16dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_warning"
-                android:tint="@color/mint_alert" />
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:gravity="center_vertical">
                 
-            <TextView
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_warning"
+                    android:padding="4dp" />
+                    
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Extended use of high-risk apps"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:layout_marginStart="16dp"
+                    android:gravity="center_vertical" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#EEEEEE" />
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Using your phone during sleep hours"
-                android:textSize="16sp"
-                android:textColor="#333333"
-                android:layout_marginStart="16dp" />
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:gravity="center_vertical">
+                
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_warning"
+                    android:padding="4dp" />
+                    
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Using your phone during sleep hours"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:layout_marginStart="16dp"
+                    android:gravity="center_vertical" />
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
+    <!-- Additional notes below warnings -->
     <TextView
         android:id="@+id/tvWarningNote"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="When these behaviors are detected, your Overrun Score goes up. If it crosses the set limit, you'll see a gentle alert pop-up."
         android:textSize="16sp"
         android:textColor="@color/mint_secondary_text"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="20dp"
         app:layout_constraintTop_toBottomOf="@id/warningContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
         
     <TextView
         android:id="@+id/tvSupportNote"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="We'll ask a few quick questions to better support your goals."
         android:textSize="16sp"
         android:textColor="@color/mint_secondary_text"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="20dp"
         app:layout_constraintTop_toBottomOf="@id/tvWarningNote"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Button at the bottom -->
     <Button
         android:id="@+id/btnSetItUp"
         android:layout_width="match_parent"
