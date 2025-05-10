@@ -12,7 +12,9 @@
         android:id="@+id/fixed_top_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
         <!-- 상단 노란색 배경 영역 -->
         <View
@@ -100,6 +102,8 @@
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
+                <!-- layout/fragment_home.xml 등 -->
+
 
                 <!-- 퍼센트 텍스트 -->
                 <TextView
@@ -133,6 +137,18 @@
                     app:layout_constraintTop_toBottomOf="@id/tv_percentage" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/arc_overlay_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            app:layout_constraintTop_toTopOf="@id/union_container"
+            app:layout_constraintBottom_toBottomOf="@id/union_container"
+            app:layout_constraintStart_toStartOf="@id/union_container"
+            app:layout_constraintEnd_toEndOf="@id/union_container" />
 
         <!-- 다람쥐와 휴대폰 이미지를 위한 FrameLayout -->
         <FrameLayout

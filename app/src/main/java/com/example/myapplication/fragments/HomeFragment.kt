@@ -5,10 +5,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.example.myapplication.R
 import com.example.myapplication.databinding.FragmentHomeBinding
+import com.example.myapplication.views.ArcProgressView
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,30 +40,40 @@ class HomeFragment : Fragment() {
         val currentDate = dateFormat.format(Date())
         binding.tvDate.text = currentDate
 
-        // 중심 원 추가
+        // unionContainer와 overlayContainer 모두 준비된 후 실행
         binding.unionContainer.post {
             val unionContainer = binding.unionContainer
+            val overlayContainer = binding.arcOverlayContainer
 
+            // unionContainer의 화면상 위치 계산
+            val unionLocation = IntArray(2)
+            val overlayLocation = IntArray(2)
+            unionContainer.getLocationOnScreen(unionLocation)
+            overlayContainer.getLocationOnScreen(overlayLocation)
+
+            val offsetX = (unionLocation[0] - overlayLocation[0]).toFloat()
+            val offsetY = (unionLocation[1] - overlayLocation[1]).toFloat()
+
+            // unionContainer 기준 중심 좌표 및 크기 계산
             val unionWidth = unionContainer.width.toFloat()
             val unionHeight = unionContainer.height.toFloat()
-            val radius = unionWidth * 0.28f
+            val radius = unionWidth * 0.34f
             val diameter = (radius * 2).toInt()
 
-            val centerX = unionWidth / 2f
-            val centerY = unionHeight / 2f
+            val centerX = offsetX + unionWidth / 2f
+            val centerY = offsetY + unionHeight / 2f
 
-            val overlay = View(requireContext()).apply {
-                layoutParams = ViewGroup.LayoutParams(diameter, diameter)
+            val arcView = ArcProgressView(requireContext()).apply {
+                layoutParams = FrameLayout.LayoutParams(diameter, diameter)
                 x = centerX - radius
                 y = centerY - radius
-                background = requireContext().getDrawable(R.drawable.black_stroke_circle)
+                percentage = 60
                 z = 99f
             }
 
-            unionContainer.addView(overlay)
+            overlayContainer.addView(arcView)
 
-            Log.d("Debug", "unionWidth = $unionWidth, unionHeight = $unionHeight")
-            Log.d("Debug", "centerX = $centerX, centerY = $centerY")
+            Log.d("Debug", "union center = ($centerX, $centerY), radius = $radius")
         }
     }
 
