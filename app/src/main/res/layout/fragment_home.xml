@@ -33,7 +33,7 @@
             android:layout_marginStart="20dp"
             android:layout_marginTop="20dp"
             android:text="Thursday, May 8, 2025"
-            android:textColor="#333333"
+            android:textColor="#5E4510"
             android:textSize="22sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -46,7 +46,7 @@
             android:layout_height="1dp"
             android:layout_marginHorizontal="20dp"
             android:layout_marginTop="8dp"
-            android:background="#40000000"
+            android:background="#5E4510"
             app:layout_constraintTop_toBottomOf="@id/tv_date" />
 
         <!-- Overrun Score 타이틀 -->
@@ -57,7 +57,7 @@
             android:layout_marginStart="20dp"
             android:layout_marginTop="16dp"
             android:text="Overrun Score"
-            android:textColor="#333333"
+            android:textColor="#5E4510"
             android:textSize="22sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -69,7 +69,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:text="from the Past Hour"
-            android:textColor="#99333333"
+            android:textColor="#9D8A70"
             android:textSize="16sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tv_overrun_title" />
@@ -118,14 +118,14 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    android:layout_marginBottom="60dp"/>
+                    android:layout_marginBottom="80dp"/>
 
                 <!-- 상태 텍스트 (Warming Up) -->
                 <TextView
                     android:id="@+id/tv_status"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
+                    android:layout_marginTop="3dp"
                     android:background="@drawable/warming_up_background"
                     android:paddingHorizontal="15dp"
                     android:paddingVertical="6dp"
