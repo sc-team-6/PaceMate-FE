@@ -7,109 +7,140 @@
     android:background="@android:color/white"
     android:padding="32dp">
 
-    <TextView
-        android:id="@+id/tvTitle"
+    <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Would you like us to consider your calendar events?"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@color/mint_dark_text"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingBottom="10dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/tvDescription"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="We can give extra weight to usage before or during scheduled events."
-        android:textSize="16sp"
-        android:textColor="@color/mint_secondary_text"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <Button
-        android:id="@+id/btnSetAccess"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:text="Set Access Permissions"
-        android:textAllCaps="false"
-        android:textSize="16sp"
-        android:textColor="@android:color/white"
-        android:backgroundTint="@color/mint_primary"
-        android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@id/tvDescription"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/tvSleepTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="When do you usually go to sleep?"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@color/mint_dark_text"
-        android:layout_marginTop="32dp"
-        app:layout_constraintTop_toBottomOf="@id/btnSetAccess"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/tvSleepDescription"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Phone use during sleep hours may have a bigger impact on your health."
-        android:textSize="16sp"
-        android:textColor="@color/mint_secondary_text"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvSleepTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <LinearLayout
-        android:id="@+id/timePickerLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@id/tvSleepDescription"
+        app:layout_constraintBottom_toTopOf="@id/buttonLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/tvStartTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="22:00"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/mint_dark_text"
-            android:padding="16dp" />
+        <androidx.constraintlayout.widget.ConstraintLayout 
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="-"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/mint_dark_text"
-            android:padding="16dp" />
+            <!-- Calendar events section -->
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Would you like us to consider your calendar events?"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#426A5A"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="20dp"/>
 
-        <TextView
-            android:id="@+id/tvEndTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="07:00"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/mint_dark_text"
-            android:padding="16dp" />
-    </LinearLayout>
+            <TextView
+                android:id="@+id/tvDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="We can give extra weight to usage before or during scheduled events."
+                android:textSize="16sp"
+                android:textColor="@color/mint_secondary_text"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/tvTitle"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <Button
+                android:id="@+id/btnSetAccess"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="24dp"
+                android:text="Set Access Permissions"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:textColor="#000000"
+                android:background="@drawable/button_border"
+                app:backgroundTint="@null"
+                app:layout_constraintTop_toBottomOf="@id/tvDescription"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Sleep time section -->
+            <TextView
+                android:id="@+id/tvSleepTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="When do you usually go to sleep?"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#426A5A"
+                android:layout_marginTop="40dp"
+                app:layout_constraintTop_toBottomOf="@id/btnSetAccess"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/tvSleepDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Phone use during sleep hours may have a bigger impact on your health."
+                android:textSize="16sp"
+                android:textColor="@color/mint_secondary_text"
+                android:layout_marginTop="16dp"
+                app:layout_constraintTop_toBottomOf="@id/tvSleepTitle"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/timePickerLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="24dp"
+                app:layout_constraintTop_toBottomOf="@id/tvSleepDescription"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <EditText
+                    android:id="@+id/tvStartTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="22:00"
+                    android:textSize="18sp"
+                    android:textColor="#000000"
+                    android:minWidth="120dp"
+                    android:gravity="center"
+                    android:background="@drawable/button_border"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="16dp"
+                    android:inputType="none"
+                    android:focusable="false" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-"
+                    android:textSize="20sp"
+                    android:textColor="#000000"
+                    android:padding="16dp" />
+
+                <EditText
+                    android:id="@+id/tvEndTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="07:00"
+                    android:textSize="18sp"
+                    android:textColor="#000000"
+                    android:minWidth="120dp"
+                    android:gravity="center"
+                    android:background="@drawable/button_border"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="16dp"
+                    android:inputType="none"
+                    android:focusable="false" />
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
 
     <LinearLayout
         android:id="@+id/buttonLayout"
@@ -143,7 +174,6 @@
             android:textSize="16sp"
             android:textColor="@android:color/white"
             android:backgroundTint="@color/mint_primary" />
-
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
