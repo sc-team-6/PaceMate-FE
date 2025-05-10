@@ -119,8 +119,8 @@ class MainActivity : AppCompatActivity() {
         val icon = item.findViewById<ImageView>(getIconIdForItem(item))
         val text = item.findViewById<TextView>(getTextIdForItem(item))
         
-        icon.setColorFilter(Color.parseColor("#EBEBEB"))
-        text.setTextColor(Color.parseColor("#EBEBEB"))
+        icon.setColorFilter(Color.parseColor("#CCCCCC"))
+        text.setTextColor(Color.parseColor("#CCCCCC"))
     }
     
     private fun getIconIdForItem(item: LinearLayout): Int {

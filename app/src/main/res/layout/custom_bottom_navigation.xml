@@ -47,7 +47,7 @@
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:src="@drawable/ic_home"
-                app:tint="#70BCA4" />
+                app:tint="#CCCCCC" />
 
             <TextView
                 android:id="@+id/text_home"
@@ -56,7 +56,7 @@
                 android:layout_marginTop="4dp"
                 android:text="Home"
                 android:textSize="11sp"
-                android:textColor="#70BCA4" />
+                android:textColor="#CCCCCC" />
         </LinearLayout>
 
         <!-- Alert -->
@@ -76,7 +76,7 @@
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:src="@drawable/ic_alert"
-                app:tint="#EBEBEB" />
+                app:tint="#CCCCCC" />
 
             <TextView
                 android:id="@+id/text_alert"
@@ -85,7 +85,7 @@
                 android:layout_marginTop="4dp"
                 android:text="Alert"
                 android:textSize="11sp"
-                android:textColor="#EBEBEB" />
+                android:textColor="#CCCCCC" />
         </LinearLayout>
 
         <!-- Report -->
@@ -105,7 +105,7 @@
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:src="@drawable/ic_report"
-                app:tint="#EBEBEB" />
+                app:tint="#CCCCCC" />
 
             <TextView
                 android:id="@+id/text_report"
@@ -114,7 +114,7 @@
                 android:layout_marginTop="4dp"
                 android:text="Report"
                 android:textSize="11sp"
-                android:textColor="#EBEBEB" />
+                android:textColor="#CCCCCC" />
         </LinearLayout>
 
         <!-- Settings -->
@@ -134,7 +134,7 @@
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:src="@drawable/ic_settings"
-                app:tint="#EBEBEB" />
+                app:tint="#CCCCCC" />
 
             <TextView
                 android:id="@+id/text_settings"
@@ -143,7 +143,7 @@
                 android:layout_marginTop="4dp"
                 android:text="Setting"
                 android:textSize="11sp"
-                android:textColor="#EBEBEB" />
+                android:textColor="#CCCCCC" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
