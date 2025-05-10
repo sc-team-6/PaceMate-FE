@@ -1,11 +1,13 @@
 package com.example.myapplication.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import com.example.myapplication.R
 import com.example.myapplication.databinding.FragmentHomeBinding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -36,7 +38,31 @@ class HomeFragment : Fragment() {
         val currentDate = dateFormat.format(Date())
         binding.tvDate.text = currentDate
 
-        // 다른 UI 설정은 XML에서 이미 설정되어 있으므로 필요한 경우에만 코드로 업데이트
+        // 중심 원 추가
+        binding.unionContainer.post {
+            val unionContainer = binding.unionContainer
+
+            val unionWidth = unionContainer.width.toFloat()
+            val unionHeight = unionContainer.height.toFloat()
+            val radius = unionWidth * 0.28f
+            val diameter = (radius * 2).toInt()
+
+            val centerX = unionWidth / 2f
+            val centerY = unionHeight / 2f
+
+            val overlay = View(requireContext()).apply {
+                layoutParams = ViewGroup.LayoutParams(diameter, diameter)
+                x = centerX - radius
+                y = centerY - radius
+                background = requireContext().getDrawable(R.drawable.black_stroke_circle)
+                z = 99f
+            }
+
+            unionContainer.addView(overlay)
+
+            Log.d("Debug", "unionWidth = $unionWidth, unionHeight = $unionHeight")
+            Log.d("Debug", "centerX = $centerX, centerY = $centerY")
+        }
     }
 
     override fun onDestroyView() {

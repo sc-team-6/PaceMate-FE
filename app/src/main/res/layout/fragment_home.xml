@@ -95,7 +95,7 @@
                     android:adjustViewBounds="true"
                     android:scaleType="fitXY"
                     android:src="@drawable/union"
-                    app:layout_constraintDimensionRatio="900:650"
+                    app:layout_constraintDimensionRatio="3600:2256"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
