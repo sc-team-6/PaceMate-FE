@@ -60,6 +60,6 @@ class OnboardingUsageFragment : Fragment() {
         
         // 호 프로그레스 뷰 업데이트
         // 0%일 때 비어있고 100%일 때 꽉 차도록 설정
-        progressArc.percentage = alertThresholdPercentage
+        progressArc.percentage = alertThresholdPercentage.toFloat()
     }
 }

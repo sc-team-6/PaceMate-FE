@@ -15,12 +15,14 @@ import com.example.myapplication.views.ArcProgressView
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.core.graphics.toColorInt
+import android.animation.ValueAnimator
+import android.view.animation.DecelerateInterpolator
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    // ✅ 전역 percentage 변수
+    // ✅ 최종 퍼센트 값
     private var percentageValue: Int = 20
 
     override fun onCreateView(
@@ -38,7 +40,6 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupUI() {
-        // 날짜 표시
         val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.US)
         binding.tvDate.text = dateFormat.format(Date())
 
@@ -49,11 +50,10 @@ class HomeFragment : Fragment() {
             else -> "Overrun Point" to "#C42727"                   // 빨강
         }
 
-        // 텍스트 및 상태 색상 UI 반영
         binding.tvPercentage.text = "$percentageValue%"
         binding.tvStatus.text = statusText
 
-        // ✅ 둥근 배경 생성 후 상태에 맞게 적용
+        // ✅ 상태 텍스트 배경 둥글게 설정
         val statusBg = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = 100f
@@ -61,16 +61,14 @@ class HomeFragment : Fragment() {
         }
         binding.tvStatus.background = statusBg
 
-        // 상단 배경 색 변경
         binding.yellowBackground.setBackgroundColor(Color.parseColor(colorHex))
 
-        // 색상 판단 기준
+        // 텍스트 색상 설정
         val isOverrun = percentageValue >= 67
         val textColorHex = if (isOverrun) "#FFFFFF" else "#5E4510"
         val subtitleColorHex = if (isOverrun) "#F8F8F8" else "#9D8A70"
         val percentageColorHex = if (isOverrun) "#C42727" else "#000000"
 
-        // 날짜, 제목, 구분선 색상 동기화
         binding.tvDate.setTextColor(textColorHex.toColorInt())
         binding.tvOverrunTitle.setTextColor(textColorHex.toColorInt())
         binding.divider.setBackgroundColor(textColorHex.toColorInt())
@@ -78,12 +76,11 @@ class HomeFragment : Fragment() {
         binding.tvPercentage.setTextColor(percentageColorHex.toColorInt())
         binding.tvMax.setTextColor(colorHex.toColorInt())
 
-        // ✅ ArcProgressView를 unionContainer 중심에 배치
+        // ✅ ArcProgressView 생성 및 부드러운 애니메이션
         binding.unionContainer.post {
             val unionContainer = binding.unionContainer
             val overlayContainer = binding.arcOverlayContainer
 
-            // unionContainer와 overlayContainer 위치 계산
             val unionLocation = IntArray(2)
             val overlayLocation = IntArray(2)
             unionContainer.getLocationOnScreen(unionLocation)
@@ -104,11 +101,23 @@ class HomeFragment : Fragment() {
                 layoutParams = FrameLayout.LayoutParams(diameter, diameter)
                 x = centerX - radius
                 y = centerY - radius
-                percentage = percentageValue
                 z = 99f
+
+                // ✅ 최종 색상 고정
+                setFixedColor(colorHex)
             }
 
             overlayContainer.addView(arcView)
+
+            // ✅ 부드럽게 차오르는 애니메이션
+            ValueAnimator.ofFloat(0f, percentageValue.toFloat()).apply {
+                duration = 1200L
+                interpolator = DecelerateInterpolator()
+                addUpdateListener {
+                    arcView.percentage = (it.animatedValue as Float)
+                }
+                start()
+            }
 
             Log.d("Debug", "Arc center = ($centerX, $centerY), radius = $radius")
         }
