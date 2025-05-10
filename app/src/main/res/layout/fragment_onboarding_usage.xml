@@ -45,21 +45,23 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
                 
-                <!-- 원형 프로그레스 배경 - 빨간색 반원 -->
+                <!-- 호 형태 프로그레스 -->
                 <ImageView
-                    android:id="@+id/progressCircle"
+                    android:id="@+id/progressArc"
                     android:layout_width="220dp"
                     android:layout_height="220dp"
-                    android:contentDescription="Progress circle"
-                    android:src="@drawable/progress_circle_80"
+                    android:contentDescription="Progress arc"
+                    android:src="@drawable/icon_ellipse"
                     android:layout_gravity="center" />
                     
                 <!-- 텍스트 그룹 -->
                 <LinearLayout
-                    android:layout_width="220dp"
-                    android:layout_height="220dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="10dp">
                     
                     <TextView
                         android:layout_width="wrap_content"
@@ -67,8 +69,7 @@
                         android:text="80%"
                         android:textSize="50sp"
                         android:textStyle="bold"
-                        android:textColor="#000000"
-                        android:layout_marginTop="-40dp"/>
+                        android:textColor="#000000" />
                         
                     <TextView
                         android:layout_width="wrap_content"
@@ -78,30 +79,32 @@
                         android:textColor="#666666" />
                 </LinearLayout>
                 
-                <!-- 폰 이미지 -->
-                <ImageView
-                    android:id="@+id/phoneImage"
-                    android:layout_width="120dp"
-                    android:layout_height="40dp"
-                    android:layout_gravity="center|bottom"
-                    android:contentDescription="Phone image"
-                    android:src="@drawable/iv_phone" />
-                    
-                <!-- 다람쥐 이미지 - 프레임으로 감싸기 -->
-                <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center|bottom">
-                
-                    <ImageView
-                        android:id="@+id/hamsterImage"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:layout_marginBottom="5dp"
-                        android:contentDescription="Hamster image"
-                        android:src="@drawable/iv_hamster" />
-                </FrameLayout>
+
             </FrameLayout>
+
+            <!-- 폰 이미지 - 프레임레이아웃 외부로 이동 -->
+            <ImageView
+                android:id="@+id/phoneImage"
+                android:layout_width="180dp"
+                android:layout_height="40dp"
+                android:contentDescription="Phone image"
+                android:src="@drawable/iv_phone"
+                app:layout_constraintTop_toBottomOf="@id/circleContainer"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="-10dp" />
+                
+            <!-- 다람쥐 이미지 - 프레임레이아웃 외부로 이동 -->
+            <ImageView
+                android:id="@+id/hamsterImage"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
+                android:contentDescription="Hamster image"
+                android:src="@drawable/iv_hamster"
+                app:layout_constraintBottom_toBottomOf="@+id/circleContainer"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginBottom="-35dp"/>
 
             <TextView
                 android:id="@+id/tvDescription"
@@ -110,8 +113,8 @@
                 android:text="We've set this level based on your usage and motivation. Let's work together to bring it down over time!"
                 android:textSize="16sp"
                 android:textColor="#666666"
-                android:layout_marginTop="80dp"
-                app:layout_constraintTop_toBottomOf="@id/circleContainer"
+                android:layout_marginTop="30dp"
+                app:layout_constraintTop_toBottomOf="@id/phoneImage"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
                 
