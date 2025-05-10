@@ -14,13 +14,14 @@ import com.example.myapplication.databinding.FragmentHomeBinding
 import com.example.myapplication.views.ArcProgressView
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.core.graphics.toColorInt
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
     // ✅ 전역 percentage 변수
-    private var percentageValue: Int = 80
+    private var percentageValue: Int = 20
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,6 +63,20 @@ class HomeFragment : Fragment() {
 
         // 상단 배경 색 변경
         binding.yellowBackground.setBackgroundColor(Color.parseColor(colorHex))
+
+        // 색상 판단 기준
+        val isOverrun = percentageValue >= 67
+        val textColorHex = if (isOverrun) "#FFFFFF" else "#5E4510"
+        val subtitleColorHex = if (isOverrun) "#F8F8F8" else "#9D8A70"
+        val percentageColorHex = if (isOverrun) "#C42727" else "#000000"
+
+        // 날짜, 제목, 구분선 색상 동기화
+        binding.tvDate.setTextColor(textColorHex.toColorInt())
+        binding.tvOverrunTitle.setTextColor(textColorHex.toColorInt())
+        binding.divider.setBackgroundColor(textColorHex.toColorInt())
+        binding.tvOverrunSubtitle.setTextColor(subtitleColorHex.toColorInt())
+        binding.tvPercentage.setTextColor(percentageColorHex.toColorInt())
+        binding.tvMax.setTextColor(colorHex.toColorInt())
 
         // ✅ ArcProgressView를 unionContainer 중심에 배치
         binding.unionContainer.post {
