@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.RadioGroup
+import com.gdg.scrollmanager.utils.ToastUtils
 import androidx.fragment.app.Fragment
 import com.gdg.scrollmanager.OnboardingActivity
 import com.gdg.scrollmanager.R
@@ -15,8 +16,10 @@ class OnboardingScreenTimeFragment : Fragment() {
     private lateinit var btnLater: Button
     private lateinit var radioGroup: RadioGroup
     private lateinit var radioGroup2: RadioGroup
+    private lateinit var radioGroup3: RadioGroup
     private var selectedScreenTime: String? = null
     private var selectedReduceUsage: String? = null
+    private var selectedReduceAmount: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,6 +31,7 @@ class OnboardingScreenTimeFragment : Fragment() {
         btnLater = view.findViewById(R.id.btnLater)
         radioGroup = view.findViewById(R.id.radioGroup)
         radioGroup2 = view.findViewById(R.id.radioGroup2)
+        radioGroup3 = view.findViewById(R.id.radioGroup3)
         return view
     }
 
@@ -36,13 +40,22 @@ class OnboardingScreenTimeFragment : Fragment() {
         
         setupOptionListeners()
         
+        // 초기 상태에서 Next 버튼 활성화 (토스트 메시지가 보이도록)
+        btnNext.isEnabled = true
+        
         btnNext.setOnClickListener {
-            saveSelections()
-            (activity as? OnboardingActivity)?.goToNextPage()
+            // 모든 항목이 선택되었을 때만 다음으로 진행
+            if (allOptionsSelected()) {
+                saveSelections()
+                (activity as? OnboardingActivity)?.goToNextPage()
+            } else {
+                showSelectionRequiredMessage()
+            }
         }
         
         btnLater.setOnClickListener {
-            (activity as? OnboardingActivity)?.goToNextPage()
+            // "Prev" 버튼은 이전 화면으로 돌아가기
+            (activity as? OnboardingActivity)?.goToPreviousPage()
         }
     }
 
@@ -54,7 +67,7 @@ class OnboardingScreenTimeFragment : Fragment() {
                 R.id.radioOption3 -> selectedScreenTime = "5_to_7"
                 R.id.radioOption4 -> selectedScreenTime = "more_than_8"
             }
-            updateNextButton()
+            checkAllOptionsSelected()
         }
         
         radioGroup2.setOnCheckedChangeListener { _, checkedId ->
@@ -63,12 +76,36 @@ class OnboardingScreenTimeFragment : Fragment() {
                 R.id.radioOption6 -> selectedReduceUsage = "media_content"
                 R.id.radioOption7 -> selectedReduceUsage = "games"
             }
-            updateNextButton()
+            checkAllOptionsSelected()
+        }
+        
+        radioGroup3.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.radioOption8 -> selectedReduceAmount = "a_lot"
+                R.id.radioOption9 -> selectedReduceAmount = "a_little"
+                R.id.radioOption10 -> selectedReduceAmount = "keep_current"
+            }
+            checkAllOptionsSelected()
         }
     }
     
-    private fun updateNextButton() {
-        btnNext.isEnabled = selectedScreenTime != null || selectedReduceUsage != null
+    // 모든 항목이 선택되었는지 확인하고 Next 버튼 상태 업데이트
+    private fun checkAllOptionsSelected() {
+        // 버튼 색상은 항상 활성 상태로 유지하되 내부적으로 진행 가능 여부 판단
+        btnNext.isEnabled = true
+    }
+    
+    private fun allOptionsSelected(): Boolean {
+        return selectedScreenTime != null && 
+               selectedReduceUsage != null && 
+               selectedReduceAmount != null
+    }
+    
+    private fun showSelectionRequiredMessage() {
+        val message = "Please select an option for all three questions to continue"
+        activity?.let {
+            ToastUtils.show(it, message)
+        }
     }
 
     private fun saveSelections() {
@@ -76,6 +113,7 @@ class OnboardingScreenTimeFragment : Fragment() {
         with(sharedPref.edit()) {
             selectedScreenTime?.let { putString("screen_time", it) }
             selectedReduceUsage?.let { putString("reduce_usage", it) }
+            selectedReduceAmount?.let { putString("reduce_amount", it) }
             apply()
         }
     }

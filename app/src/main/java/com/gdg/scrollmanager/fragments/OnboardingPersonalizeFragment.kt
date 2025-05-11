@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import com.gdg.scrollmanager.utils.ToastUtils
 import androidx.fragment.app.Fragment
 import com.gdg.scrollmanager.OnboardingActivity
 import com.gdg.scrollmanager.R
@@ -13,7 +14,8 @@ import com.gdg.scrollmanager.R
 class OnboardingPersonalizeFragment : Fragment() {
     private lateinit var btnNext: Button
     private lateinit var btnLater: Button
-    private lateinit var btnSetAccess: Button
+    // TEMPORARILY COMMENTED OUT - Calendar access button
+    // private lateinit var btnSetAccess: Button
     private lateinit var tvStartTime: TextView
     private lateinit var tvEndTime: TextView
 
@@ -26,7 +28,8 @@ class OnboardingPersonalizeFragment : Fragment() {
         
         btnNext = view.findViewById(R.id.btnNext)
         btnLater = view.findViewById(R.id.btnLater)
-        btnSetAccess = view.findViewById(R.id.btnSetAccess)
+        // TEMPORARILY COMMENTED OUT - Calendar access button
+        // btnSetAccess = view.findViewById(R.id.btnSetAccess)
         tvStartTime = view.findViewById(R.id.tvStartTime)
         tvEndTime = view.findViewById(R.id.tvEndTime)
         
@@ -36,10 +39,17 @@ class OnboardingPersonalizeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // TEMPORARILY COMMENTED OUT - Calendar access button click handler
+        // Calendar permissions request functionality removed temporarily
+        /* 
         btnSetAccess.setOnClickListener {
             // 여기서 캘린더 접근 권한 요청 로직 구현
             saveCalendarAccess(true)
         }
+        */
+        
+        // 버튼 항상 활성화 유지
+        btnNext.isEnabled = true
         
         tvStartTime.setOnClickListener {
             // 시간 선택 다이얼로그 구현 (간소화를 위해 생략)
@@ -50,12 +60,34 @@ class OnboardingPersonalizeFragment : Fragment() {
         }
         
         btnNext.setOnClickListener {
-            saveSleepSchedule(tvStartTime.text.toString(), tvEndTime.text.toString())
-            (activity as? OnboardingActivity)?.goToNextPage()
+            // 수면 시간이 선택되었는지 확인
+            if (isTimeSelectionValid()) {
+                saveSleepSchedule(tvStartTime.text.toString(), tvEndTime.text.toString())
+                (activity as? OnboardingActivity)?.goToNextPage()
+            } else {
+                showSelectionRequiredMessage()
+            }
         }
         
         btnLater.setOnClickListener {
-            (activity as? OnboardingActivity)?.goToNextPage()
+            // "Prev" 버튼은 이전 화면으로 돌아가기
+            (activity as? OnboardingActivity)?.goToPreviousPage()
+        }
+    }
+    
+    private fun isTimeSelectionValid(): Boolean {
+        // 여기서는 시간 형식 검증 등의 로직 추가 가능
+        // 현재는 기본값이 이미 설정되어 있으므로 항상 true 반환
+        val startTime = tvStartTime.text.toString()
+        val endTime = tvEndTime.text.toString()
+        
+        return startTime.isNotEmpty() && endTime.isNotEmpty()
+    }
+    
+    private fun showSelectionRequiredMessage() {
+        val message = "Please select both sleep and wake times"
+        activity?.let {
+            ToastUtils.show(it, message)
         }
     }
 

@@ -26,6 +26,7 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var btnUsageStats: Button
     private lateinit var btnAccessibility: Button
     private lateinit var btnContinue: Button
+    private lateinit var btnDebugSkip: Button
     
     private lateinit var sharedPreferences: SharedPreferences
     
@@ -39,6 +40,7 @@ class PermissionsActivity : AppCompatActivity() {
         btnUsageStats = findViewById(R.id.btn_usage_stats)
         btnAccessibility = findViewById(R.id.btn_accessibility)
         btnContinue = findViewById(R.id.btn_continue)
+        btnDebugSkip = findViewById(R.id.btn_debug_skip)
 
         // 권한 설정 버튼 리스너
         btnUsageStats.setOnClickListener {
@@ -73,6 +75,24 @@ class PermissionsActivity : AppCompatActivity() {
         
         // 계속하기 버튼 리스너
         btnContinue.setOnClickListener {
+            startMainActivity()
+        }
+        
+        // 디버그용 SKIP 버튼 리스너
+        btnDebugSkip.setOnClickListener {
+            // 디버그 모드임을 표시하는 토스트 메시지
+            Toast.makeText(
+                this,
+                "DEBUG MODE: Skipping permissions check",
+                Toast.LENGTH_SHORT
+            ).show()
+            
+            // 권한을 가진 것으로 간주하고 메인 화면으로 진행
+            sharedPreferences.edit()
+                .putBoolean("permissionsGranted", true)
+                .putBoolean("debugMode", true)  // 디버그 모드 플래그 설정
+                .apply()
+            
             startMainActivity()
         }
         
@@ -198,11 +218,6 @@ class PermissionsActivity : AppCompatActivity() {
     }
     
     private fun startMainActivity() {
-        // 권한 설정 완료 상태 저장
-        sharedPreferences.edit()
-            .putBoolean("permissionsGranted", true)
-            .apply()
-        
         // 메인 액티비티로 이동
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)

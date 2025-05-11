@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
@@ -27,9 +28,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navAlert: LinearLayout
     private lateinit var navReport: LinearLayout
     private lateinit var navSettings: LinearLayout
+    
+    // 디버그 모드 플래그
+    private var isDebugMode = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 디버그 모드 설정 확인
+        val sharedPref = getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
+        isDebugMode = sharedPref.getBoolean("debugMode", false)
+        Log.d("MainActivity", "Debug mode enabled: $isDebugMode")
         
         // 온보딩 완료 여부 체크
         if (!isOnboardingCompleted()) {
@@ -38,8 +47,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
         
-        // 권한 체크 - 두 권한 모두 필요
-        if (!arePermissionsGranted()) {
+        // 권한 체크 - 디버그 모드가 아닐 때만 실행
+        if (!isDebugMode && !arePermissionsGranted()) {
             navigateToPermissions()
             return
         }
@@ -65,9 +74,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         
-        // 앱이 포그라운드로 돌아올 때마다 권한 체크
+        // 앱이 포그라운드로 돌아올 때마다 권한 체크 (디버그 모드가 아닐 때만)
         // 이미 권한 화면으로 이동했거나 레이아웃이 초기화되지 않은 경우에는 체크하지 않음
-        if (::binding.isInitialized && !arePermissionsGranted()) {
+        if (!isDebugMode && ::binding.isInitialized && !arePermissionsGranted()) {
             navigateToPermissions()
         }
     }
@@ -82,8 +91,13 @@ class MainActivity : AppCompatActivity() {
         return sharedPref.getBoolean("isOnboardingCompleted", false)
     }
     
-    // 두 권한 모두 확인
+    // 두 권한 모두 확인 (디버그 모드에서는 항상 true 반환)
     private fun arePermissionsGranted(): Boolean {
+        // 디버그 모드면 항상 true 반환
+        if (isDebugMode) {
+            Log.d("MainActivity", "Debug mode: Bypassing permissions check")
+            return true
+        }
         return hasUsageStatsPermission() && isAccessibilityServiceEnabled()
     }
     
