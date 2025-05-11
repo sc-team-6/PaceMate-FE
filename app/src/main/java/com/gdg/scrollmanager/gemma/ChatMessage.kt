@@ -2,18 +2,23 @@ package com.gdg.scrollmanager.gemma
 
 import java.util.UUID
 
-const val USER_PREFIX = "User: "
-const val MODEL_PREFIX = "Model: "
+const val USER_PREFIX = "user"
+const val MODEL_PREFIX = "model"
+const val THINKING_MARKER_END = "</think>"
 
 data class ChatMessage(
     val id: String = UUID.randomUUID().toString(),
-    val message: String = "",
-    val isFromUser: Boolean = true,
+    val rawMessage: String = "",
+    val author: String = USER_PREFIX,
     val isThinking: Boolean = false,
     val isLoading: Boolean = false
 ) {
     val isEmpty: Boolean
-        get() = message.isEmpty()
-    val rawMessage: String
-        get() = if (isFromUser) USER_PREFIX + message else MODEL_PREFIX + message
+        get() = rawMessage.isEmpty()
+        
+    val isFromUser: Boolean
+        get() = author == USER_PREFIX
+        
+    val message: String
+        get() = rawMessage.replace(THINKING_MARKER_END, "")
 }

@@ -40,9 +40,10 @@ class ChatViewModel(
             
             try {
                 val asyncInference = inferenceModel.generateResponseAsync(userMessage, { partialResult, done ->
-                    // 길이가 0인 결과는 무시
-                    if (partialResult.isNotEmpty()) {
-                        _uiState.value.appendMessage(partialResult)
+                    viewModelScope.launch(Dispatchers.Main) {
+                        if (partialResult.isNotEmpty()) {
+                            _uiState.value.appendMessage(partialResult)
+                        }
                     }
                     
                     if (done) {

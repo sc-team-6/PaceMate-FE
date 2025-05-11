@@ -43,7 +43,7 @@ class InferenceModel private constructor(
     private lateinit var llmInferenceSession: LlmInferenceSession
     private val TAG = "InferenceModel"
 
-    val uiState = UiState(model.thinking)
+    val uiState = UiState(supportsThinking = model.thinking)
     var isInitialized = false
         private set // 외부에서 읽기는 가능하지만 쓰기는 불가능
     

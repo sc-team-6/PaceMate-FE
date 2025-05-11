@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -56,8 +57,8 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Automatically scroll to the bottom when a new message is added
-    LaunchedEffect(uiState.messages.size) {
+    // Automatically scroll to the bottom when a new message is added or updated
+    LaunchedEffect(uiState.messages.size, uiState.messages.firstOrNull()?.id, uiState.messages.firstOrNull()?.message) {
         if (uiState.messages.isNotEmpty()) {
             listState.animateScrollToItem(0)
         }
@@ -92,8 +93,8 @@ fun ChatScreen(
                     LazyColumn(
                         state = listState,
                         reverseLayout = true,
-                        contentPadding = PaddingValues(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(
@@ -144,7 +145,9 @@ fun ChatScreen(
                                         Text(
                                             text = message.message,
                                             color = contentColor,
-                                            style = MaterialTheme.typography.bodyLarge
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            modifier = Modifier,
+                                            softWrap = true
                                         )
                                     }
                                 }
