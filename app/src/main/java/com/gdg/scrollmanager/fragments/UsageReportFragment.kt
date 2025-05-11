@@ -413,7 +413,45 @@ class UsageReportFragment : Fragment() {
                 scrollLength.toFloat() / (report.usageTime60Min.toFloat() * 60f) // 초당 스크롤 길이
             } else 0f
             
-            // ONNX 모델 예측 실행
+            // 로그로 값 확인
+            Log.d("AddictionPredictor", "Input values:")
+            Log.d("AddictionPredictor", "recent15minUsage: ${report.usageTime15Min}")
+            Log.d("AddictionPredictor", "recent30minUsage: ${report.usageTime30Min}")
+            Log.d("AddictionPredictor", "recent60minUsage: ${report.usageTime60Min}")
+            Log.d("AddictionPredictor", "unlocks15min: ${report.unlockCount15Min}")
+            Log.d("AddictionPredictor", "appSwitches15min: ${report.appSwitchCount15Min}")
+            Log.d("AddictionPredictor", "snsAppUsage: ${report.socialAppCount}")
+            Log.d("AddictionPredictor", "avgSessionLength: ${report.averageSessionLength}")
+            Log.d("AddictionPredictor", "hour: ${hour}")
+            Log.d("AddictionPredictor", "dayOfWeek: ${dayOfWeek}")
+            Log.d("AddictionPredictor", "scrollLength: ${scrollLength}")
+            Log.d("AddictionPredictor", "unlockRate: ${unlockRate}")
+            Log.d("AddictionPredictor", "switchRate: ${switchRate}")
+            Log.d("AddictionPredictor", "scrollRate: ${scrollRate}")
+            Log.d("AddictionPredictor", "topAppCategory: ${report.mainAppCategory}")
+            
+            // 테스트용 고정 값을 사용하여 예측할 경우 아래 주석을 해제하세요
+            /*
+            // ONNX 모델 예측 실행 (테스트용 고정 값)
+            val result = phoneUsagePredictor.predict(
+                recent15minUsage = 3,
+                recent30minUsage = 7,
+                recent60minUsage = 20,
+                unlocks15min = 4,
+                appSwitches15min = 8,
+                snsAppUsage = 3,
+                avgSessionLength = 1.0f,
+                hour = 10,
+                dayOfWeek = 2,
+                scrollLength = 400,
+                unlockRate = 0.5f,
+                switchRate = 0.25f,
+                scrollRate = 0.1f,
+                topAppCategory = "Utility"
+            )
+            */
+            
+            // 실제 측정 데이터 기반 예측
             val result = phoneUsagePredictor.predict(
                 recent15minUsage = report.usageTime15Min,
                 recent30minUsage = report.usageTime30Min,

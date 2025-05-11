@@ -52,7 +52,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     
     // ONNX Runtime 추가
-    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.15.0")
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.14.0")
     
     // XML 관련 의존성
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -69,7 +69,7 @@ dependencies {
     
     // CardView 추가
     implementation("androidx.cardview:cardview:1.0.0")
-    
+
     // Test 의존성
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

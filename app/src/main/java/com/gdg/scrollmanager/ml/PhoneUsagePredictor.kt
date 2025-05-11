@@ -39,6 +39,16 @@ class PhoneUsagePredictor(private val context: Context) {
                 val modelBytes = context.assets.open("phone_usage_model.onnx").readBytes()
                 session = ortEnvironment?.createSession(modelBytes)
                 Log.d(TAG, "모델 로드 성공")
+                
+                try {
+                    Log.d(TAG, "모델 입력 개수: ${session?.inputInfo?.size ?: 0}")
+                    session?.inputInfo?.forEach { (name, info) ->
+                        Log.d(TAG, "모델 입력 이름: $name")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "모델 입력 정보 가져오기 실패: ${e.message}")
+                }
+                
             } catch (e: Exception) {
                 Log.e(TAG, "모델 로드 실패: ${e.message}")
                 e.printStackTrace()
@@ -86,27 +96,92 @@ class PhoneUsagePredictor(private val context: Context) {
         val inputMap = HashMap<String, OnnxTensor>()
         
         try {
-            // ONNX 모델이 기대하는 입력 이름으로 변경
-            inputMap["recent_15min_usage"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(recent15minUsage.toFloat())), longArrayOf(1))
-            inputMap["recent_30min_usage"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(recent30minUsage.toFloat())), longArrayOf(1))
-            inputMap["recent_60min_usage"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(recent60minUsage.toFloat())), longArrayOf(1))
-            inputMap["unlocks_15min"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(unlocks15min.toFloat())), longArrayOf(1))
-            inputMap["app_switches_15min"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(appSwitches15min.toFloat())), longArrayOf(1))
-            inputMap["sns_app_usage"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(snsAppUsage.toFloat())), longArrayOf(1))
-            inputMap["avg_session_length"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(avgSessionLength)), longArrayOf(1))
-            inputMap["hour"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(hour.toFloat())), longArrayOf(1))
-            inputMap["dayofweek"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(dayOfWeek.toFloat())), longArrayOf(1))
-            inputMap["scroll_length"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(scrollLength.toFloat())), longArrayOf(1))
-            inputMap["unlock_rate"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(unlockRate)), longArrayOf(1))
-            inputMap["switch_rate"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(switchRate)), longArrayOf(1))
-            inputMap["scroll_rate"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(scrollRate)), longArrayOf(1))
-            
-            // 앱 카테고리는 숫자형 인코딩 사용
+            // 카테고리 값 인코딩 - 정수로 변환
             val categoryValue = appCategoryMapping[topAppCategory] ?: 3 // 기본값은 Utility
-            inputMap["top_app_category"] = OnnxTensor.createTensor(ortEnvironment, FloatBuffer.wrap(floatArrayOf(categoryValue.toFloat())), longArrayOf(1))
+            
+            // 입력 이름과 데이터 확인을 위한 로깅
+            Log.d(TAG, "모델 입력 데이터:")
+            Log.d(TAG, "recent_15min_usage: $recent15minUsage")
+            Log.d(TAG, "recent_30min_usage: $recent30minUsage")
+            Log.d(TAG, "recent_60min_usage: $recent60minUsage")
+            Log.d(TAG, "unlocks_15min: $unlocks15min")
+            Log.d(TAG, "app_switches_15min: $appSwitches15min")
+            Log.d(TAG, "sns_app_usage: $snsAppUsage")
+            Log.d(TAG, "avg_session_length: $avgSessionLength")
+            Log.d(TAG, "hour: $hour")
+            Log.d(TAG, "dayofweek: $dayOfWeek")
+            Log.d(TAG, "scroll_length: $scrollLength")
+            Log.d(TAG, "unlock_rate: $unlockRate")
+            Log.d(TAG, "switch_rate: $switchRate")
+            Log.d(TAG, "scroll_rate: $scrollRate")
+            Log.d(TAG, "top_app_category: $topAppCategory -> $categoryValue")
+            
+            // 모델 입력 정보 확인
+            val inputInfo = session?.inputInfo
+            if (inputInfo == null || inputInfo.isEmpty()) {
+                Log.e(TAG, "모델 입력 정보가 없음")
+                return predictWithHeuristic(
+                    recent15minUsage, recent30minUsage, recent60minUsage, 
+                    unlocks15min, appSwitches15min, snsAppUsage, 
+                    avgSessionLength, hour, dayOfWeek, scrollLength, 
+                    unlockRate, switchRate, scrollRate, topAppCategory
+                )
+            }
+            
+            // 입력 이름 매핑 (모델에 따라 조정 필요)
+            val numericInputs = mapOf(
+                "recent_15min_usage" to recent15minUsage.toFloat(),
+                "recent_30min_usage" to recent30minUsage.toFloat(),
+                "recent_60min_usage" to recent60minUsage.toFloat(),
+                "unlocks_15min" to unlocks15min.toFloat(),
+                "app_switches_15min" to appSwitches15min.toFloat(),
+                "sns_app_usage" to snsAppUsage.toFloat(),
+                "avg_session_length" to avgSessionLength,
+                "hour" to hour.toFloat(),
+                "day_of_week" to dayOfWeek.toFloat(),
+                "scroll_length" to scrollLength.toFloat(),
+                "unlock_rate" to unlockRate,
+                "switch_rate" to switchRate,
+                "scroll_rate" to scrollRate
+            )
+            
+            val stringInputs = mapOf(
+                "top_app_category" to topAppCategory
+            )
+            
+            // 모델의 입력에 맞게 텐서 생성
+            for ((name, info) in inputInfo) {
+                // 입력 이름이 숫자 매핑에 있는지 확인
+                val numValue = numericInputs[name]
+                if (numValue != null) {
+                    // 숫자 텐서 생성
+                    val tensor = OnnxTensor.createTensor(
+                        ortEnvironment,
+                        FloatBuffer.wrap(floatArrayOf(numValue)),
+                        longArrayOf(1, 1) // 차원을 [1, 1]로 설정 (2차원 텐서)
+                    )
+                    inputMap[name] = tensor
+                    Log.d(TAG, "숫자 입력 텐서 생성: $name = $numValue")
+                    continue
+                }
+                
+                // 입력 이름이 문자열 매핑에 있는지 확인
+                val strValue = stringInputs[name]
+                if (strValue != null) {
+                    // 문자열 텐서 생성
+                    val strArray = Array(1) { Array(1) { strValue } } // 2차원 문자열 배열 [1, 1]
+                    val tensor = OnnxTensor.createTensor(ortEnvironment, strArray)
+                    inputMap[name] = tensor
+                    Log.d(TAG, "문자열 입력 텐서 생성: $name = $strValue")
+                    continue
+                }
+                
+                Log.w(TAG, "모델이 요구하는 입력 이름이 매핑에 없음: $name")
+            }
             
             // 추론 실행
             val results = session?.run(inputMap)
+            Log.d(TAG, "추론 완료, 결과: ${results?.size() ?: 0}개")
             
             // 모델이 로드되지 않았거나 추론에 실패한 경우 기본값 반환
             if (results == null) {
@@ -120,19 +195,31 @@ class PhoneUsagePredictor(private val context: Context) {
             }
             
             try {
-                // 출력 처리
-                val probabilitiesOutput = results.get(0)?.value as? Array<*>
-                val predictionOutput = results.get(1)?.value as? Array<*>
+                // 결과 확인을 위한 로깅
+                for (i in 0 until (results.size() ?: 0)) {
+                    // 출력 이름 대신 인덱스 사용
+                    val outputIndex = i
+                    Log.d(TAG, "결과[$i] 인덱스: $outputIndex")
+                    Log.d(TAG, "결과[$i] 값 타입: ${results.get(i)?.value?.javaClass}")
+                }
+                
+                // 출력 처리 - 출력 형식에 맞게 수정
+                // 로그를 통해 확인한 결과: 
+                // [0] - Long 배열(prediction)
+                // [1] - 2차원 Float 배열(probabilities)
+                
+                val predictionOutput = results.get(0)?.value as? LongArray
+                val probabilitiesOutput = results.get(1)?.value as? Array<FloatArray>
                 
                 // null 체크 후 안전하게 처리
-                if (probabilitiesOutput != null && predictionOutput != null) {
-                    val probabilities = (probabilitiesOutput[0] as? FloatArray) ?: floatArrayOf(0.5f, 0.5f)
-                    val prediction = ((predictionOutput[0] as? LongArray)?.get(0) ?: 0L).toInt()
+                if (predictionOutput != null && probabilitiesOutput != null && probabilitiesOutput.isNotEmpty()) {
+                    val prediction = predictionOutput[0].toInt()
+                    val probabilities = probabilitiesOutput[0]
                     
-                    Log.d(TAG, "ONNX 모델 예측 성공: $prediction, 확률: ${probabilities[0]} ${probabilities[1]}")
+                    Log.d(TAG, "ONNX 모델 예측 성공: $prediction, 확률: ${probabilities.joinToString()}")
                     return Pair(probabilities, prediction)
                 } else {
-                    Log.e(TAG, "출력 결과가 null, 휴리스틱 모델 사용")
+                    Log.e(TAG, "출력 결과 타입 변환 실패, 휴리스틱 모델 사용")
                     return predictWithHeuristic(
                         recent15minUsage, recent30minUsage, recent60minUsage, 
                         unlocks15min, appSwitches15min, snsAppUsage, 
