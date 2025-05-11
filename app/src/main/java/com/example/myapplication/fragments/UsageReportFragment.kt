@@ -180,8 +180,23 @@ class UsageReportFragment : Fragment() {
             val sessionTime = formatSessionTime(report.averageSessionLength)
             binding.tvAvgSession.text = sessionTime
             
+            // 스크롤 거리 업데이트
             val scrollDistance = DataStoreUtils.formatScrollDistance(report.scrollDistance)
             binding.tvScrollDistance.text = scrollDistance
+            
+            // 접근성 서비스가 활성화되어 있지 않으면 스크롤 거리에 알림 표시
+            if (!isAccessibilityServiceEnabled() && report.scrollDistance == 0f) {
+                binding.tvScrollDistance.text = "접근성 설정 필요"
+                binding.tvScrollDistance.setTextColor(Color.RED)
+                binding.tvScrollDistance.setOnClickListener {
+                    // 접근성 설정 화면으로 이동
+                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    startActivity(intent)
+                }
+            } else {
+                binding.tvScrollDistance.setTextColor(Color.BLACK)
+                binding.tvScrollDistance.setOnClickListener(null)
+            }
             
             // 앱별 사용 현황 업데이트
             updateTopAppsInfo(report) // 파이차트 대신 숫자 정보 표시
@@ -190,6 +205,18 @@ class UsageReportFragment : Fragment() {
             // 앱 전환 디버그 정보 업데이트
             updateAppSwitchesDebug()
         }
+    }
+    
+    // 접근성 서비스 활성화 여부 확인
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val accessibilityManager = requireContext().getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
+        val enabledServices = Settings.Secure.getString(
+            requireContext().contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+        
+        val serviceName = requireContext().packageName + "/.ScrollAccessibilityService"
+        return enabledServices.contains(serviceName)
     }
     
     private fun updateAppSwitchesDebug() {
