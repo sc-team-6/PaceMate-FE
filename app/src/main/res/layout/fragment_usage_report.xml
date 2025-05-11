@@ -379,7 +379,7 @@
                     android:id="@+id/app_usage_summary_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="앱 사용 통계 요약"
+                    android:text="앱 사용 통계 요약 (최근 1일)"
                     android:textColor="@android:color/black"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -388,7 +388,7 @@
                     android:id="@+id/app_usage_summary_description"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="최근 5개 우선순위 앱 사용 통계"
+                    android:text="최근 1일 상위 5개 앱 사용 통계"
                     android:textColor="@android:color/darker_gray"
                     android:textSize="14sp"
                     android:layout_marginTop="4dp" />
@@ -411,6 +411,41 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             app:layout_constraintTop_toBottomOf="@id/app_usage_summary_container" />
+            
+        <!-- 앱 전환 디버그 정보 (개발용) -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_debug_app_switches"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/recyclerView">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="앱 전환 디버그 정보 (최근 15분)"
+                    android:textColor="@android:color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/debug_app_switches_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="8dp">
+                    <!-- 동적으로 추가될 앱 전환 디버그 정보 -->
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- 권한 안내 레이아웃 -->
         <LinearLayout

@@ -3,8 +3,12 @@ package com.example.myapplication.fragments
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -33,6 +37,7 @@ class UsageReportFragment : Fragment() {
     
     private lateinit var adapter: AppUsageAdapter
     private var usageReport: UsageReport? = null
+    private var appSwitches: List<UsageStatsUtils.AppSwitchEvent> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -96,7 +101,9 @@ class UsageReportFragment : Fragment() {
         binding.progressBar.visibility = View.VISIBLE
         
         viewLifecycleOwner.lifecycleScope.launch {
-            usageReport = generateUsageReport()
+            val reportResult = generateUsageReport()
+            usageReport = reportResult.first
+            appSwitches = reportResult.second
             
             withContext(Dispatchers.Main) {
                 updateUI()
@@ -105,9 +112,19 @@ class UsageReportFragment : Fragment() {
         }
     }
     
-    private suspend fun generateUsageReport(): UsageReport = withContext(Dispatchers.IO) {
+    private suspend fun generateUsageReport(): Pair<UsageReport, List<UsageStatsUtils.AppSwitchEvent>> = withContext(Dispatchers.IO) {
         val context = requireContext()
         val appUsageList = UsageStatsUtils.getAppUsageStats(context)
+        
+        // 앱 전환 디버그 로그 추가
+        val appSwitches = UsageStatsUtils.debugAppSwitchesIn15Min(context)
+        Log.d("UsageReport", "Total app switches in last 15 minutes: ${appSwitches.size}")
+        
+        // 앱 전환 상세 로그 (CSV 형식)
+        Log.d("UsageReport", "TIME,FROM_APP,TO_APP,DURATION_SEC")
+        appSwitches.forEach { event ->
+            Log.d("UsageReport", "${event.timestamp},${event.fromApp},${event.toApp},${event.durationSec}")
+        }
         
         val usageTime15Min = UsageStatsUtils.getTotalUsageTimeInMinutes(context, 15)
         val usageTime30Min = UsageStatsUtils.getTotalUsageTimeInMinutes(context, 30)
@@ -125,7 +142,7 @@ class UsageReportFragment : Fragment() {
         // 스크롤 거리 가져오기
         val scrollDistance = DataStoreUtils.getTotalScrollDistance(context)
         
-        return@withContext UsageReport(
+        val report = UsageReport(
             usageTime15Min = usageTime15Min,
             usageTime30Min = usageTime30Min,
             usageTime60Min = usageTime60Min,
@@ -138,6 +155,8 @@ class UsageReportFragment : Fragment() {
             scrollDistance = scrollDistance,
             appUsageList = appUsageList
         )
+        
+        return@withContext Pair(report, appSwitches)
     }
     
     private fun updateUI() {
@@ -167,6 +186,108 @@ class UsageReportFragment : Fragment() {
             // 앱별 사용 현황 업데이트
             updateTopAppsInfo(report) // 파이차트 대신 숫자 정보 표시
             adapter.submitList(report.appUsageList)
+            
+            // 앱 전환 디버그 정보 업데이트
+            updateAppSwitchesDebug()
+        }
+    }
+    
+    private fun updateAppSwitchesDebug() {
+        // 이전 정보 삭제
+        binding.debugAppSwitchesContainer.removeAllViews()
+        
+        if (appSwitches.isEmpty()) {
+            val textView = TextView(requireContext())
+            textView.text = "최근 15분 동안 앱 전환 기록이 없습니다."
+            textView.textSize = 14f
+            textView.setTextColor(Color.GRAY)
+            binding.debugAppSwitchesContainer.addView(textView)
+            return
+        }
+        
+        // 헤더 추가
+        val headerView = layoutInflater.inflate(
+            R.layout.item_debug_app_switch,
+            binding.debugAppSwitchesContainer,
+            false
+        )
+        
+        headerView.findViewById<TextView>(R.id.tv_time).text = "시간"
+        headerView.findViewById<TextView>(R.id.tv_from_app).text = "이전 앱"
+        headerView.findViewById<TextView>(R.id.tv_to_app).text = "전환 앱"
+        headerView.findViewById<TextView>(R.id.tv_duration).text = "사용 시간"
+        
+        // 헤더 텍스트 스타일 설정
+        headerView.findViewById<TextView>(R.id.tv_time).setTypeface(null, Typeface.BOLD)
+        headerView.findViewById<TextView>(R.id.tv_from_app).setTypeface(null, Typeface.BOLD)
+        headerView.findViewById<TextView>(R.id.tv_to_app).setTypeface(null, Typeface.BOLD)
+        headerView.findViewById<TextView>(R.id.tv_duration).setTypeface(null, Typeface.BOLD)
+        
+        binding.debugAppSwitchesContainer.addView(headerView)
+        
+        // 구분선 추가
+        val divider = View(requireContext())
+        divider.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 
+            resources.getDimensionPixelSize(R.dimen.divider_height)
+        )
+        divider.setBackgroundColor(Color.LTGRAY)
+        binding.debugAppSwitchesContainer.addView(divider)
+        
+        // 최대 15개만 표시
+        val displaySwitches = appSwitches.take(15)
+        
+        // 앱 전환 항목 추가
+        for (appSwitch in displaySwitches) {
+            val itemView = layoutInflater.inflate(
+                R.layout.item_debug_app_switch,
+                binding.debugAppSwitchesContainer,
+                false
+            )
+            
+            itemView.findViewById<TextView>(R.id.tv_time).text = appSwitch.timestamp
+            itemView.findViewById<TextView>(R.id.tv_from_app).text = getDisplayAppName(appSwitch.fromApp)
+            itemView.findViewById<TextView>(R.id.tv_to_app).text = getDisplayAppName(appSwitch.toApp)
+            itemView.findViewById<TextView>(R.id.tv_duration).text = formatDuration(appSwitch.durationSec)
+            
+            binding.debugAppSwitchesContainer.addView(itemView)
+        }
+        
+        // 더 많은 항목이 있으면 메시지 표시
+        if (appSwitches.size > 15) {
+            val moreItemsView = TextView(requireContext())
+            moreItemsView.text = "... 외 ${appSwitches.size - 15}개의 항목이 더 있습니다."
+            moreItemsView.textSize = 12f
+            moreItemsView.setTextColor(Color.GRAY)
+            moreItemsView.gravity = Gravity.CENTER
+            moreItemsView.setPadding(0, 8, 0, 0)
+            binding.debugAppSwitchesContainer.addView(moreItemsView)
+        }
+    }
+    
+    private fun getDisplayAppName(appName: String): String {
+        // 앱 이름이 너무 길면 줄임
+        return if (appName.length > 15) {
+            "${appName.substring(0, 13)}..."
+        } else {
+            appName
+        }
+    }
+    
+    private fun formatDuration(seconds: Long): String {
+        return when {
+            seconds >= 3600 -> {
+                val hours = seconds / 3600
+                val minutes = (seconds % 3600) / 60
+                "${hours}시간 ${minutes}분"
+            }
+            seconds >= 60 -> {
+                val minutes = seconds / 60
+                "${minutes}분"
+            }
+            else -> {
+                "${seconds}초"
+            }
         }
     }
     
