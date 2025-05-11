@@ -147,7 +147,7 @@ object UsageStatsUtils {
         return (totalUsageTime / (1000 * 60)).toInt()
     }
     
-    // 특정 시간대의 폰 잠금 해제 횟수
+    // 특정 시간대의 화면 켜짐(잠금 해제) 횟수
     fun getUnlockCount(context: Context, minutes: Int): Int {
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         
@@ -157,17 +157,18 @@ object UsageStatsUtils {
         val events = usageStatsManager.queryEvents(startTime, endTime)
         val event = UsageEvents.Event()
         
-        var unlockCount = 0
+        var screenOnCount = 0
         
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
             
+            // 화면이 켜진 경우만 카운트 (잠금 해제 이벤트)
             if (event.eventType == UsageEvents.Event.KEYGUARD_HIDDEN) {
-                unlockCount++
+                screenOnCount++
             }
         }
         
-        return unlockCount
+        return screenOnCount
     }
     
     // 특정 시간대의 앱 전환 횟수 (홈 화면 제외)

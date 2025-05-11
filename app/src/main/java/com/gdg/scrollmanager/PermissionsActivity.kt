@@ -4,9 +4,6 @@ import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Color
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
@@ -19,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.appcompat.app.AlertDialog
 import com.gdg.scrollmanager.R
 
 class PermissionsActivity : AppCompatActivity() {
@@ -56,18 +54,21 @@ class PermissionsActivity : AppCompatActivity() {
             ).show()
         }
 
-        // 접근성 권한 설정 버튼 리스너
         btnAccessibility.setOnClickListener {
-            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            startActivity(intent)
-
-            Toast.makeText(
-                this,
-                "Find 'StopScrolling' and enable the accessibility service.",
-                Toast.LENGTH_LONG
-            ).show()
+            AlertDialog.Builder(this)
+                .setTitle("Enable Accessibility Service")
+                .setMessage(
+                    "To use StopScrolling properly, please enable its accessibility service:\n\n" +
+                            "👉 Settings > Accessibility > Installed apps > StopScrolling > Enable"
+                )
+                .setPositiveButton("Go to Settings") { _, _ ->
+                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    startActivity(intent)
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
         
         // 계속하기 버튼 리스너
@@ -122,15 +123,20 @@ class PermissionsActivity : AppCompatActivity() {
             btnAccessibility.visibility = View.VISIBLE
         }
         
-        // 계속하기 버튼 상태 업데이트 - 앱 사용 통계 권한은 반드시 필요하고,
-        // 접근성 서비스는 있으면 더 좋지만 없어도 앱은 사용할 수 있도록 함
-        btnContinue.isEnabled = hasUsageStats
+        // 계속하기 버튼 상태 업데이트 - 두 권한 모두 필요
+        btnContinue.isEnabled = hasUsageStats && hasAccessibility
         
-        if (hasUsageStats && !hasAccessibility) {
-            // 앱 사용 통계는 있지만 접근성 서비스는 없는 경우
-            btnContinue.text = "계속하기 (스크롤 측정 제외)"
-        } else if (hasUsageStats && hasAccessibility) {
+        if (hasUsageStats && hasAccessibility) {
             btnContinue.text = "계속하기"
+        } else if (hasUsageStats) {
+            btnContinue.text = "접근성 권한 필요"
+            btnContinue.isEnabled = false
+        } else if (hasAccessibility) {
+            btnContinue.text = "사용 통계 권한 필요"
+            btnContinue.isEnabled = false
+        } else {
+            btnContinue.text = "모든 권한 필요"
+            btnContinue.isEnabled = false
         }
     }
     
@@ -187,15 +193,7 @@ class PermissionsActivity : AppCompatActivity() {
             e.printStackTrace()
         }
         
-        // 방법 3: 앱 자체 설정으로 우회 (사용자가 직접 허용했는지 여부)
-        val sharedPref = getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
-        val userConfirmedAccessibility = sharedPref.getBoolean("userConfirmedAccessibility", false)
-        
-        // 사용자가 권한 화면에서 계속하기를 눌렀다면 허용으로 간주
-        if (userConfirmedAccessibility) {
-            return true
-        }
-        
+        // 접근성 서비스가 실제로 활성화되지 않았으면 false 반환
         return false
     }
     
@@ -203,7 +201,6 @@ class PermissionsActivity : AppCompatActivity() {
         // 권한 설정 완료 상태 저장
         sharedPreferences.edit()
             .putBoolean("permissionsGranted", true)
-            .putBoolean("userConfirmedAccessibility", true) // 사용자가 직접 접근성 설정 확인
             .apply()
         
         // 메인 액티비티로 이동

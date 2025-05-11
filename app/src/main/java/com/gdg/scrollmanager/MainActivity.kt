@@ -6,7 +6,10 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Process
+import android.provider.Settings
 import android.view.View
+import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityManager
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -35,10 +38,9 @@ class MainActivity : AppCompatActivity() {
             return
         }
         
-        // 권한 체크
+        // 권한 체크 - 두 권한 모두 필요
         if (!arePermissionsGranted()) {
-            startActivity(Intent(this, PermissionsActivity::class.java))
-            finish()
+            navigateToPermissions()
             return
         }
         
@@ -59,34 +61,87 @@ class MainActivity : AppCompatActivity() {
             replaceFragment(HomeFragment())
         }
     }
+    
+    override fun onResume() {
+        super.onResume()
+        
+        // 앱이 포그라운드로 돌아올 때마다 권한 체크
+        // 이미 권한 화면으로 이동했거나 레이아웃이 초기화되지 않은 경우에는 체크하지 않음
+        if (::binding.isInitialized && !arePermissionsGranted()) {
+            navigateToPermissions()
+        }
+    }
+    
+    private fun navigateToPermissions() {
+        startActivity(Intent(this, PermissionsActivity::class.java))
+        finish()
+    }
 
     private fun isOnboardingCompleted(): Boolean {
         val sharedPref = getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
         return sharedPref.getBoolean("isOnboardingCompleted", false)
     }
     
+    // 두 권한 모두 확인
     private fun arePermissionsGranted(): Boolean {
-        // 권한 설정 완료 여부 확인 (사용자가 완전히 건너뛰기를 선택한 경우에도 true)
-        val sharedPref = getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
-        if (sharedPref.getBoolean("permissionsGranted", false)) {
-            return true
-        }
-        
-        // 실제 권한 상태 확인
-        val hasUsageStats = hasUsageStatsPermission()
-        
-        // 접근성 서비스는 없어도 앱을 사용할 수 있도록 함
-        return hasUsageStats
+        return hasUsageStatsPermission() && isAccessibilityServiceEnabled()
     }
     
     private fun hasUsageStatsPermission(): Boolean {
-        val appOps = getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
+        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = appOps.checkOpNoThrow(
-            android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
-            android.os.Process.myUid(),
+            AppOpsManager.OPSTR_GET_USAGE_STATS,
+            Process.myUid(),
             packageName
         )
-        return mode == android.app.AppOpsManager.MODE_ALLOWED
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+    
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        // 방법 1: 설정에서 직접 확인
+        try {
+            val enabledServicesString = Settings.Secure.getString(
+                contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            ) ?: return false
+            
+            // 가능한 모든 서비스 이름 형식
+            val possibleServiceNames = listOf(
+                "$packageName/.ScrollAccessibilityService",
+                "$packageName/com.gdg.scrollmanager.ScrollAccessibilityService",
+                "com.gdg.scrollmanager/.ScrollAccessibilityService",
+                "com.gdg.scrollmanager/com.gdg.scrollmanager.ScrollAccessibilityService"
+            )
+            
+            val isEnabled = possibleServiceNames.any { serviceName ->
+                enabledServicesString.contains(serviceName)
+            }
+            
+            if (isEnabled) return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        
+        // 방법 2: 액세스 가능한 서비스 목록 확인
+        try {
+            val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+            val runningServices = am.getEnabledAccessibilityServiceList(
+                AccessibilityEvent.TYPES_ALL_MASK
+            )
+            
+            for (service in runningServices) {
+                val serviceInfo = service.resolveInfo.serviceInfo
+                if (serviceInfo.packageName == packageName && 
+                    serviceInfo.name.contains("ScrollAccessibilityService")) {
+                    return true
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        
+        // 접근성 서비스가 실제로 활성화되지 않았으면 false 반환
+        return false
     }
 
     private fun setupCustomNavigation() {

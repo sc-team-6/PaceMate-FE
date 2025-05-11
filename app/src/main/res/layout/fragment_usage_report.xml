@@ -173,7 +173,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="15분 내 잠금해제"
+                            android:text="15분 내 화면 켜짐"
                             android:textColor="@android:color/darker_gray"
                             android:textSize="14sp" />
 
