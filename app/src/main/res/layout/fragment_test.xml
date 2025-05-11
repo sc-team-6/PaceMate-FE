@@ -6,10 +6,10 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/text_settings_title"
+        android:id="@+id/text_test_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="설정"
+        android:text="테스트 프래그먼트"
         android:textSize="24sp"
         android:textStyle="bold"
         android:layout_marginBottom="24dp"
@@ -17,23 +17,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/btn_view_onboarding"
+    <TextView
+        android:id="@+id/text_test_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="온보딩 페이지 다시 보기"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/text_settings_title"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <Button
-        android:id="@+id/btn_gemma_test"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Gemma 테스트"
+        android:text="이 화면은 테스트용 프래그먼트입니다."
+        android:textSize="16sp"
         android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/btn_view_onboarding"
+        app:layout_constraintTop_toBottomOf="@id/text_test_title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
