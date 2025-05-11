@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -34,8 +35,11 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
-        compose = false
+        compose = true
         viewBinding = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.10"
     }
 }
 
@@ -69,11 +73,21 @@ dependencies {
     
     // CardView 추가
     implementation("androidx.cardview:cardview:1.0.0")
+    
+    // Compose 관련 의존성
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation("androidx.compose.material3:material3:1.2.0")
+    implementation("androidx.compose.ui:ui:1.6.3")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.6.3")
+    implementation("androidx.compose.ui:ui-tooling:1.6.3")
+    
+    // MediaPipe 
+    implementation("com.google.mediapipe:tasks-genai:0.10.22")
 
     // Test 의존성
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
-
-// JitPack 저장소는 settings.gradle.kts에 이미 추가되어 있습니다.

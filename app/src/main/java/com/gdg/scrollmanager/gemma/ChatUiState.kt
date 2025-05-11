@@ -43,7 +43,8 @@ class UiState(val thinking: Boolean) {
                     id = lastMessage.id,
                     message = partialResult,
                     isFromUser = false,
-                    isThinking = thinking
+                    isThinking = thinking,
+                    isLoading = false
                 )
             )
         }
