@@ -1,7 +1,10 @@
 package com.example.myapplication
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.view.View
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager2.widget.ViewPager2
 import com.example.myapplication.adapters.OnboardingAdapter
@@ -14,6 +17,12 @@ class OnboardingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
+        
+        // 액션바와 상태바 완전 투명 설정
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or 
+                                              View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                              View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        window.statusBarColor = Color.TRANSPARENT
         
         // 설정 화면에서 진입했는지 확인
         isFromSettings = intent.getBooleanExtra("FROM_SETTINGS", false)

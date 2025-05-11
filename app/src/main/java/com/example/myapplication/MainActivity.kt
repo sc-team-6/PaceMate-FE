@@ -36,12 +36,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 상태바 색상 설정
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        window.statusBarColor = ContextCompat.getColor(this, R.color.yellow_background)
-        
-        // 상태바 아이콘 색상을 어둡게 설정 (검은색 아이콘)
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        // 상태바 완전 투명 설정 (진짜 투명)
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or 
+                                              View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                              View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        window.statusBarColor = Color.TRANSPARENT
 
         // 커스텀 네비게이션 바 설정
         setupCustomNavigation()
