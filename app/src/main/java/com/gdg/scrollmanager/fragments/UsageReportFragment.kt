@@ -24,6 +24,7 @@ import com.gdg.scrollmanager.databinding.FragmentUsageReportBinding
 import com.gdg.scrollmanager.models.UsageReport
 import com.gdg.scrollmanager.utils.DataStoreUtils
 import com.gdg.scrollmanager.utils.UsageStatsUtils
+import com.gdg.scrollmanager.ml.PhoneUsagePredictor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,6 +38,9 @@ class UsageReportFragment : Fragment() {
     private lateinit var adapter: AppUsageAdapter
     private var usageReport: UsageReport? = null
     private var appSwitches: List<UsageStatsUtils.AppSwitchEvent> = emptyList()
+    
+    // 휴대폰 사용 중독 예측기
+    private lateinit var phoneUsagePredictor: PhoneUsagePredictor
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,7 +56,13 @@ class UsageReportFragment : Fragment() {
         setupRecyclerView()
         setupNumberSummary() // 파이차트 대신 숫자 요약 화면 설정
         setupRefreshButton()
+        initPhoneUsagePredictor() // ONNX 모델 초기화
         checkPermissionAndLoadData()
+    }
+    
+    private fun initPhoneUsagePredictor() {
+        phoneUsagePredictor = PhoneUsagePredictor(requireContext())
+        phoneUsagePredictor.initialize()
     }
 
     private fun setupRecyclerView() {
@@ -182,6 +192,9 @@ class UsageReportFragment : Fragment() {
             // 스크롤 거리 업데이트
             val scrollDistance = DataStoreUtils.formatScrollDistance(report.scrollDistance)
             binding.tvScrollDistance.text = scrollDistance
+            
+            // 중독 예측 분석 실행
+            analyzeAddiction(report)
             
             // 접근성 서비스가 활성화되어 있지 않으면 스크롤 거리에 알림 표시
             if (!isAccessibilityServiceEnabled() && report.scrollDistance == 0f) {
@@ -373,6 +386,94 @@ class UsageReportFragment : Fragment() {
             else -> String.format("%d초", seconds)
         }
     }
+    
+    /**
+     * ONNX 모델을 사용하여 휴대폰 사용 중독 여부 분석
+     */
+    private fun analyzeAddiction(report: UsageReport) {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
+            // 현재 시간 관련 데이터 가져오기
+            val calendar = Calendar.getInstance()
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1 // Calendar.SUNDAY(1)부터 시작하므로 0-6으로 변환
+            
+            // 스크롤 관련 데이터 계산
+            val scrollLength = report.scrollDistance.toInt() // 총 스크롤 길이
+            
+            // 비율 계산 (변화율)
+            val unlockRate: Float = if (report.usageTime15Min > 0) {
+                report.unlockCount15Min.toFloat() / report.usageTime15Min.toFloat()
+            } else 0f
+            
+            val switchRate: Float = if (report.usageTime15Min > 0) {
+                report.appSwitchCount15Min.toFloat() / report.usageTime15Min.toFloat()
+            } else 0f
+            
+            val scrollRate: Float = if (report.usageTime60Min > 0 && scrollLength > 0) {
+                scrollLength.toFloat() / (report.usageTime60Min.toFloat() * 60f) // 초당 스크롤 길이
+            } else 0f
+            
+            // ONNX 모델 예측 실행
+            val result = phoneUsagePredictor.predict(
+                recent15minUsage = report.usageTime15Min,
+                recent30minUsage = report.usageTime30Min,
+                recent60minUsage = report.usageTime60Min,
+                unlocks15min = report.unlockCount15Min,
+                appSwitches15min = report.appSwitchCount15Min,
+                snsAppUsage = report.socialAppCount,
+                avgSessionLength = report.averageSessionLength,
+                hour = hour,
+                dayOfWeek = dayOfWeek,
+                scrollLength = scrollLength,
+                unlockRate = unlockRate,
+                switchRate = switchRate,
+                scrollRate = scrollRate,
+                topAppCategory = report.mainAppCategory
+            )
+            
+            // UI 업데이트는 메인 스레드에서 실행
+            withContext(Dispatchers.Main) {
+                updateAddictionUI(result)
+            }
+        }
+    }
+    
+    /**
+     * 중독 분석 결과 UI 업데이트
+     */
+    private fun updateAddictionUI(result: Pair<FloatArray, Int>) {
+        val probabilities = result.first
+        val prediction = result.second
+        
+        // 중독 확률 계산 (0-100%)
+        val addictionProb = (probabilities[1] * 100).toInt()
+        
+        // 중독 상태 표시
+        when (prediction) {
+            0 -> {
+                binding.tvAddictionStatus.text = "정상 사용 패턴"
+                binding.tvAddictionStatus.setTextColor(Color.parseColor("#4CAF50")) // 녹색
+            }
+            1 -> {
+                binding.tvAddictionStatus.text = "중독 위험 패턴"
+                binding.tvAddictionStatus.setTextColor(Color.parseColor("#F44336")) // 빨간색
+            }
+        }
+        
+        // 확률 표시
+        binding.tvAddictionProbability.text = "(${addictionProb}%)"
+        
+        // 조언 표시
+        val advice = when {
+            addictionProb >= 80 -> "심각한 중독 수준입니다. 스마트폰 사용을 제한하고 전문가의 도움을 받아보세요."
+            addictionProb >= 60 -> "중독 위험이 높습니다. 사용 시간을 줄이고 정기적인 휴식이 필요합니다."
+            addictionProb >= 40 -> "주의가 필요한 단계입니다. 사용 패턴을 모니터링하고 SNS 앱 사용을 줄여보세요."
+            addictionProb >= 20 -> "약간의 주의가 필요합니다. 취침 전 스마트폰 사용을 자제하세요."
+            else -> "건강한 사용 패턴입니다. 현재 수준을 유지하세요."
+        }
+        
+        binding.tvAddictionAdvice.text = advice
+    }
 
     override fun onResume() {
         super.onResume()
@@ -381,6 +482,9 @@ class UsageReportFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        if (::phoneUsagePredictor.isInitialized) {
+            phoneUsagePredictor.close()
+        }
         _binding = null
     }
 }

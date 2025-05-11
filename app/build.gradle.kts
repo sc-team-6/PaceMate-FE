@@ -51,6 +51,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     
+    // ONNX Runtime 추가
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.15.0")
+    
     // XML 관련 의존성
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
