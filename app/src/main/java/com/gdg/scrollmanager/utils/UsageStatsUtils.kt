@@ -88,7 +88,13 @@ object UsageStatsUtils {
 
         var colorIndex = 0
 
+        // 런처 패키지를 제외한 앱들만 필터링
         for ((packageName, timeInForeground) in appUsageMap) {
+            // 런처 패키지는 건너뛰기
+            if (isLauncherPackage(packageName)) {
+                continue
+            }
+            
             if (timeInForeground > 0) {
                 try {
                     val appInfo = packageManager.getApplicationInfo(packageName, 0)
@@ -130,6 +136,11 @@ object UsageStatsUtils {
             events.getNextEvent(event)
             
             if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
+                // 런처 패키지(홈 화면)는 건너뛰기
+                if (isLauncherPackage(event.packageName)) {
+                    continue
+                }
+                
                 currentApp = event.packageName
                 currentStartTime = event.timeStamp
             } else if (event.eventType == UsageEvents.Event.ACTIVITY_PAUSED && currentApp == event.packageName) {
@@ -138,8 +149,8 @@ object UsageStatsUtils {
             }
         }
         
-        // 현재 사용 중인 앱이 있으면 현재 시간까지 계산
-        if (currentApp.isNotEmpty() && currentStartTime > 0) {
+        // 현재 사용 중인 앱이 있으면 현재 시간까지 계산 (런처 패키지가 아닌 경우)
+        if (currentApp.isNotEmpty() && currentStartTime > 0 && !isLauncherPackage(currentApp)) {
             totalUsageTime += (System.currentTimeMillis() - currentStartTime)
         }
         
