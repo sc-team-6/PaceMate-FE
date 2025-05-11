@@ -46,7 +46,7 @@
                 app:layout_constraintEnd_toEndOf="parent">
                 
                 <!-- 호 형태 프로그레스 -->
-                <com.example.myapplication.views.ArcProgressView
+                <com.gdg.scrollmanager.views.ArcProgressView
                     android:id="@+id/progressArc"
                     android:layout_width="250dp"
                     android:layout_height="250dp"

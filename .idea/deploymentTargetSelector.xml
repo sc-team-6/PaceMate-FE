@@ -2,19 +2,16 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="app">
+      <SelectionState runConfigName="AppUsageStats.app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-04-24T10:14:08.687922Z">
+        <DropdownSelection timestamp="2025-05-11T10:14:19.476241Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=R39M30AA58J" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/818jsy/.android/avd/Copy_of_Medium_Phone_API_35.avd" />
             </handle>
           </Target>
         </DropdownSelection>
         <DialogSelection />
-      </SelectionState>
-      <SelectionState runConfigName="AppUsageStats.app">
-        <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
   </component>

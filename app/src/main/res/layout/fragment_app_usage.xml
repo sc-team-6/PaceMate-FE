@@ -64,7 +64,7 @@
                     android:alpha="0.7"
                     android:layout_marginTop="4dp" />
 
-                <com.example.myapplication.views.PieChartView
+                <com.gdg.scrollmanager.views.PieChartView
                     android:id="@+id/pie_chart"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
