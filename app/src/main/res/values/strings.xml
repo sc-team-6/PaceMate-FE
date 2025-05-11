@@ -21,4 +21,12 @@
         외부 스크롤 감지를 위한 접근성 서비스입니다.
     </string>
     <string name="advice_text">Things are speeding up - <b>Slow down and take a breath</b></string>
+    
+    <!-- Gemma 관련 문자열 -->
+    <string name="empty_message">대화를 시작하세요</string>
+    <string name="send">전송</string>
+    <string name="tokens_remaining">남은 토큰 수: %1$d</string>
+    <string name="model_thinking">모델이 생각중...</string>
+    <string name="loading_failed">로딩 실패</string>
+    <string name="retry">다시 시도</string>
 </resources>
