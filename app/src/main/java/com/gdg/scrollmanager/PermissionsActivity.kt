@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Process
 import android.provider.Settings
@@ -14,6 +16,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.gdg.scrollmanager.R
@@ -38,14 +41,33 @@ class PermissionsActivity : AppCompatActivity() {
         btnUsageStats = findViewById(R.id.btn_usage_stats)
         btnAccessibility = findViewById(R.id.btn_accessibility)
         btnContinue = findViewById(R.id.btn_continue)
-        
+
         // 권한 설정 버튼 리스너
         btnUsageStats.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+
+            Toast.makeText(
+                this,
+                "Find 'StopScrolling' and enable the usage access permission.",
+                Toast.LENGTH_LONG
+            ).show()
         }
-        
+
+        // 접근성 권한 설정 버튼 리스너
         btnAccessibility.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+
+            Toast.makeText(
+                this,
+                "Find 'StopScrolling' and enable the accessibility service.",
+                Toast.LENGTH_LONG
+            ).show()
         }
         
         // 계속하기 버튼 리스너
