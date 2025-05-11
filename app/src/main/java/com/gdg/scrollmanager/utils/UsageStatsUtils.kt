@@ -439,8 +439,12 @@ object UsageStatsUtils {
         val durationSec: Long
     )
     
-    // 평균 세션 길이 (초 단위)
+    // 평균 세션 길이 (초 단위) - 임시로 0 반환
     fun getAverageSessionDuration(context: Context): Float {
+        // 임시로 0 반환
+        return 0f
+        
+        /* 원래 코드 주석 처리
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         
         val calendar = Calendar.getInstance()
@@ -486,6 +490,7 @@ object UsageStatsUtils {
         } else {
             0f
         }
+        */
     }
     
     // 현재 날짜/시간 포맷
