@@ -6,7 +6,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         
-        <!-- 상태바와 네비게이션 바 설정 -->
+        <!-- 상태바와 네비게이션 바 설정 - 투명으로 설정 -->
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         
@@ -14,13 +14,15 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         
-        <!-- 배경 설정 -->
-        <item name="android:windowBackground">@drawable/background_splash</item>
         
-        <!-- 전체 화면 모드 -->
+        <!-- 전체 화면 모드 설정 -->
         <item name="android:windowFullscreen">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        
+        <!-- 시스템 UI 관련 설정 -->
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
         <item name="android:fitsSystemWindows">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 </resources>

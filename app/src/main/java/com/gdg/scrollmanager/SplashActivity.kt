@@ -1,18 +1,24 @@
 package com.gdg.scrollmanager
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.view.animation.AnimationSet
 import android.view.animation.ScaleAnimation
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 class SplashActivity : AppCompatActivity() {
     
@@ -21,11 +27,17 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // 이 부분을 추가하여 액션바와 시스템 바를 숨기기 위한 플래그 설정
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode = 
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        
         // 액션바 숨기기
         supportActionBar?.hide()
         
-        // 시스템 UI(상태바, 네비게이션 바) 숨기기
-        hideSystemUI()
+        // 상태바, 네비게이션 바 투명하게 설정 및 전체 화면 모드
+        makeFullScreen()
         
         setContentView(R.layout.activity_splash)
         
@@ -44,6 +56,41 @@ class SplashActivity : AppCompatActivity() {
             // 스플래시 액티비티 종료
             finish()
         }, SPLASH_DELAY)
+    }
+    
+    private fun makeFullScreen() {
+        // 상태바, 네비게이션 바 색상 투명하게 설정
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        
+        // 시스템 장식(데코) 레이아웃이 콘텐츠 영역을 고려하지 않도록 설정
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        
+        // 시스템 바를 숨기는 최신 방식
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ 방식
+            window.insetsController?.let { controller ->
+                controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        } else {
+            // Android 10 이하 방식 (레거시)
+            @Suppress("DEPRECATION")
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
+            )
+            
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+            )
+        }
     }
     
     private fun animateSplashElements() {
@@ -71,46 +118,15 @@ class SplashActivity : AppCompatActivity() {
             addAnimation(scale)
         }
         
-        // 앱 이름 애니메이션 설정 (페이드인, 딜레이 있음)
-        val nameAnim = AlphaAnimation(0f, 1f).apply {
-            duration = 800
-            startOffset = 300 // 로고 애니메이션 후 조금 딜레이
-            fillAfter = true
-        }
-        
         // 애니메이션 시작
         logoImage.startAnimation(logoAnimSet)
     }
     
-    private fun hideSystemUI() {
-        // 안드로이드 버전에 따라 다른 방식으로 시스템 UI 숨기기
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11 이상
-            window.setDecorFitsSystemWindows(false)
-            window.decorView.windowInsetsController?.let { controller ->
-                // 상태바와 네비게이션 바 숨기기
-                controller.hide(android.view.WindowInsets.Type.systemBars())
-                // 사용자 상호작용 시 시스템 바가 다시 나타나지 않도록 설정
-                controller.systemBarsBehavior = android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        } else {
-            // Android 10 이하
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-            )
-        }
-    }
-    
+    // 앱이 포커스를 얻을 때마다 전체 화면 상태 유지
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            hideSystemUI()
+            makeFullScreen()
         }
     }
 }
