@@ -127,7 +127,7 @@ object UsageDataAggregator {
                 Log.d(TAG, "15분 실제 데이터 사용: 화면 켜짐 ${screenSeconds15Min}초")
             } else {
                 // 15분 기본 추정값: 3분
-                screenSeconds15Min = 90
+                screenSeconds15Min = 180
                 unlockCount15Min = unlockCount5Min * 3
                 Log.d(TAG, "15분 추정 데이터 사용: 화면 켜짐 ${screenSeconds15Min}초 (5분 데이터의 3배)")
             }
@@ -139,7 +139,7 @@ object UsageDataAggregator {
                 Log.d(TAG, "30분 실제 데이터 사용: 화면 켜짐 ${screenSeconds30Min}초")
             } else {
                 // 30분 기본 추정값: 6분
-                screenSeconds30Min = 180
+                screenSeconds30Min = 360
                 Log.d(TAG, "30분 추정 데이터 사용: 화면 켜짐 ${screenSeconds30Min}초 (5분 데이터의 6배)")
             }
             
@@ -150,7 +150,7 @@ object UsageDataAggregator {
                 Log.d(TAG, "60분 실제 데이터 사용: 화면 켜짐 ${screenSeconds60Min}초")
             } else {
                 // 60분 기본 추정값: 12분
-                screenSeconds60Min = 360
+                screenSeconds60Min = 720
                 Log.d(TAG, "60분 추정 데이터 사용: 화면 켜짐 ${screenSeconds60Min}초 (5분 데이터의 12배)")
             }
             

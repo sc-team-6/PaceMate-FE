@@ -46,11 +46,14 @@ object UsageStatsUtils {
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val packageManager = context.packageManager
 
+        // 데이터 수집 기간 설정 (1일)
         val calendar = Calendar.getInstance()
         calendar.add(Calendar.DAY_OF_YEAR, -1) // 1일 데이터로 변경
 
         val startTime = calendar.timeInMillis
         val endTime = System.currentTimeMillis()
+
+        Log.d("UsageStatsUtils", "데이터 수집 기간: ${formatDate(startTime)} ~ ${formatDate(endTime)}")
 
         val events = usageStatsManager.queryEvents(startTime, endTime)
         val event = UsageEvents.Event()
@@ -70,6 +73,19 @@ object UsageStatsUtils {
                 appUsageMap[currentApp] = currentTime + (event.timeStamp - currentStartTime)
                 currentApp = ""
             }
+        }
+
+        // 앱 사용 시간 디버그 로그
+        Log.d("UsageStatsUtils", "수집된 앱 사용 데이터 (필터링 전): ${appUsageMap.size}개 앱")
+        appUsageMap.entries.sortedByDescending { it.value }.take(20).forEach { (pkg, time) ->
+            val hours = time / (1000 * 60 * 60)
+            val minutes = (time / (1000 * 60)) % 60
+            val appLabel = try {
+                packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
+            } catch (e: PackageManager.NameNotFoundException) {
+                pkg
+            }
+            Log.d("UsageStatsUtils", "앱: $appLabel, 패키지: $pkg, 사용시간: ${hours}시간 ${minutes}분 (${time}ms)")
         }
 
         val appInfoList = ArrayList<AppUsageInfo>()
@@ -92,6 +108,7 @@ object UsageStatsUtils {
         for ((packageName, timeInForeground) in appUsageMap) {
             // 런처 패키지는 건너뛰기
             if (isLauncherPackage(packageName)) {
+                Log.d("UsageStatsUtils", "런처 패키지 제외: $packageName")
                 continue
             }
             
@@ -110,12 +127,27 @@ object UsageStatsUtils {
                     )
                     colorIndex++
                 } catch (e: PackageManager.NameNotFoundException) {
+                    Log.e("UsageStatsUtils", "앱 정보 찾기 실패: $packageName")
                     continue
                 }
             }
         }
 
+        // 최종 결과 로그
+        Log.d("UsageStatsUtils", "최종 필터링된 앱 목록: ${appInfoList.size}개")
+        appInfoList.sortedByDescending { it.timeInForeground }.take(10).forEach { app ->
+            val hours = app.timeInForeground / (1000 * 60 * 60)
+            val minutes = (app.timeInForeground / (1000 * 60)) % 60
+            Log.d("UsageStatsUtils", "최종 앱: ${app.appName}, 패키지: ${app.packageName}, 사용시간: ${hours}시간 ${minutes}분")
+        }
+
         return appInfoList
+    }
+    
+    // 날짜 포맷팅을 위한 도우미 함수
+    private fun formatDate(timestamp: Long): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        return sdf.format(Date(timestamp))
     }
     
     // 특정 시간대의 총 사용 시간 (분 단위)
