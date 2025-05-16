@@ -6,6 +6,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
@@ -43,6 +45,10 @@ class UsageReportFragment : Fragment() {
     
     // 휴대폰 사용 중독 예측기
     private lateinit var phoneUsagePredictor: PhoneUsagePredictor
+    
+    // 5초마다 예측 실행을 위한 핸들러
+    private val handler = Handler(Looper.getMainLooper())
+    private var predictionRunnable: Runnable? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,6 +67,9 @@ class UsageReportFragment : Fragment() {
         setupDataObservers() // Flow 관찰자 설정
         initPhoneUsagePredictor() // ONNX 모델 초기화
         checkPermissionAndLoadData()
+        
+        // 5초마다 예측 실행
+        startPeriodicPrediction()
     }
     
     private fun setupDataObservers() {
@@ -555,11 +564,20 @@ class UsageReportFragment : Fragment() {
                 recentApps = report.recentAppPackages
             )
             
+            // ONNX 모델의 Pair<FloatArray, Int>를 DataStore가 저장하는 형식인 Pair<Int, Float>로 변환
+            val prediction = result.second
+            val probability = result.first[1] * 100f // 확률 백분율로 변환
+            
+            // 예측 결과를 DataStore에 저장
+            try {
+                DataStoreUtils.savePredictionResult(requireContext(), prediction, probability)
+                Log.d("AddictionPredictor", "예측 결과 저장 성공: 예측=$prediction, 확률=$probability%")
+            } catch (e: Exception) {
+                Log.e("AddictionPredictor", "예측 결과 저장 오류: ${e.message}")
+            }
+            
             // UI 업데이트는 메인 스레드에서 실행
             withContext(Dispatchers.Main) {
-                // ONNX 모델의 Pair<FloatArray, Int>를 DataStore가 저장하는 형식인 Pair<Int, Float>로 변환
-                val prediction = result.second
-                val probability = result.first[1] * 100f // 확률 백분율로 변환
                 updateAddictionUI(Pair(prediction, probability))
             }
         }
@@ -618,13 +636,63 @@ class UsageReportFragment : Fragment() {
         binding.tvAddictionAdvice.text = advice + reliabilityInfo
     }
 
+    /**
+     * 5초마다 예측을 실행하는 기능을 시작합니다.
+     */
+    private fun startPeriodicPrediction() {
+        // 이전 예약을 먼저 취소
+        stopPeriodicPrediction()
+        
+        predictionRunnable = Runnable {
+            // 최신 사용 데이터를 가져와 중독 예측 실행
+            viewLifecycleOwner.lifecycleScope.launch {
+                val report = DataStoreUtils.getLatestUsageReportFlow(requireContext()).first()
+                if (report != null) {
+                    // 예측 실행
+                    analyzeAddiction(report)
+                    Log.d("UsageReportFragment", "5초 주기 예측 실행: 시간 ${System.currentTimeMillis()}")
+                }
+                
+                // 다음 업데이트 예약 (5초 후)
+                handler.postDelayed(predictionRunnable!!, 5000)
+            }
+        }
+        
+        // 첫 번째 업데이트 예약
+        handler.postDelayed(predictionRunnable!!, 1000) // 1초 후 바로 실행
+    }
+    
+    /**
+     * 예측 주기 실행을 중지합니다.
+     */
+    private fun stopPeriodicPrediction() {
+        predictionRunnable?.let {
+            handler.removeCallbacks(it)
+            predictionRunnable = null
+        }
+    }
+    
     override fun onResume() {
         super.onResume()
         checkPermissionAndLoadData()
+        
+        // 화면이 다시 보일 때 주기 예측 재시작
+        startPeriodicPrediction()
     }
-
+    
+    override fun onPause() {
+        super.onPause()
+        
+        // 화면이 안 보일 때 주기 예측 중지
+        stopPeriodicPrediction()
+    }
+    
     override fun onDestroyView() {
         super.onDestroyView()
+        
+        // 주기 예측 중지
+        stopPeriodicPrediction()
+        
         if (::phoneUsagePredictor.isInitialized) {
             phoneUsagePredictor.close()
         }

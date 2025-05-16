@@ -96,6 +96,15 @@ object DataStoreUtils {
         }
     }
     
+    // 예측 결과 저장하기
+    suspend fun savePredictionResult(context: Context, result: Int, probability: Float) {
+        context.usageDataStore.edit { preferences ->
+            preferences[PREDICTION_RESULT_KEY] = result
+            preferences[PREDICTION_PROBABILITY_KEY] = probability
+            preferences[LAST_UPDATE_TIMESTAMP_KEY] = System.currentTimeMillis()
+        }
+    }
+    
     // 데이터 수집 진행상황 가져오기 (Flow)
     fun getDataCollectionProgressFlow(context: Context): Flow<Int> {
         return context.usageDataStore.data.map { preferences ->

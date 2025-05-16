@@ -13,7 +13,7 @@
         <!-- 상태바와 네비게이션 바의 아이콘 색상 -->
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
-        
+
         
         <!-- 전체 화면 모드 설정 -->
         <item name="android:windowFullscreen">true</item>

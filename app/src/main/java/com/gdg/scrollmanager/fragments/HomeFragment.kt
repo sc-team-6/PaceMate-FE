@@ -17,8 +17,13 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.core.graphics.toColorInt
 import android.animation.ValueAnimator
+import android.os.Handler
+import android.os.Looper
 import android.view.animation.DecelerateInterpolator
-import kotlin.random.Random
+import androidx.lifecycle.lifecycleScope
+import com.gdg.scrollmanager.utils.DataStoreUtils
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -27,8 +32,15 @@ class HomeFragment : Fragment() {
     // 설문으로부터 계산된 임계값(Alert Level)
     private var alertThresholdValue: Int = 80
     
-    // 현재 Overrun Score (랜덤값)
+    // 현재 Overrun Score (중독 확률)
     private var currentScoreValue: Int = 0
+    
+    // 5초마다 데이터를 갱신하기 위한 핸들러
+    private val handler = Handler(Looper.getMainLooper())
+    private var updateRunnable: Runnable? = null
+    
+    // ArcProgressView 참조 저장
+    private var arcProgressView: ArcProgressView? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,10 +57,13 @@ class HomeFragment : Fragment() {
         // 설문에서 계산된 임계값 가져오기
         loadAlertThreshold()
         
-        // 랜덤 Overrun Score 생성
-        generateRandomScore()
+        // 최신 중독 확률 가져오기
+        loadAddictionProbability()
         
         setupUI()
+        
+        // 5초마다 데이터 갱신 시작
+        startDataUpdates()
     }
     
     /**
@@ -65,11 +80,138 @@ class HomeFragment : Fragment() {
     }
     
     /**
-     * 랜덤 Overrun Score 생성 (0%~100% 사이)
+     * DataStore에서 최신 중독 확률을 가져옵니다.
      */
-    private fun generateRandomScore() {
-        currentScoreValue = Random.nextInt(0, 101)
-        Log.d("HomeFragment", "Generated random score: $currentScoreValue%")
+    private fun loadAddictionProbability() {
+        if (view == null || !isAdded) return  // View가 없거나 Fragment가 경로에 추가되지 않은 경우 실행하지 않음
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // DataStore에서 최신 예측 결과 가져오기
+                val predictionResult = DataStoreUtils.getPredictionResultFlow(requireContext()).first()
+                
+                // 확률 값 추출 (0-100 사이의 값으로 변환)
+                val probability = predictionResult.second.toInt()
+                
+                Log.d("HomeFragment", "Loaded addiction probability: $probability%")
+                
+                // 현재 스코어 값 업데이트
+                if (probability != currentScoreValue) {
+                    val oldValue = currentScoreValue
+                    currentScoreValue = probability
+                    
+                    // UI가 이미 초기화되었다면 업데이트
+                    if (_binding != null && arcProgressView != null) {
+                        updateUIWithNewScore(oldValue, probability)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "Error loading addiction probability: ${e.message}")
+                
+                // 문제가 있을 경우 0으로 설정
+                currentScoreValue = 0
+            }
+        }
+    }
+    
+    /**
+     * 새 스코어 값으로 UI를 업데이트합니다.
+     */
+    private fun updateUIWithNewScore(oldValue: Int, newValue: Int) {
+        // 상태 텍스트 및 색상 결정 (현재 Overrun Score 기준)
+        val (statusText, colorHex) = when {
+            newValue <= 33 -> "Cruising Mode" to "#76F376" // 초록
+            newValue <= 66 -> "Warming Up" to "#FFDE58"    // 노랑
+            else -> "Overrun Point" to "#C42727"           // 빨강
+        }
+
+        // 현재 Overrun Score 텍스트 업데이트
+        binding.tvPercentage.text = "$newValue%"
+        binding.tvStatus.text = statusText
+
+        // 상태 텍스트 배경 둥글게 설정
+        val statusBg = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 100f
+            setColor(Color.parseColor(colorHex))
+        }
+        binding.tvStatus.background = statusBg
+
+        binding.yellowBackground.setBackgroundColor(Color.parseColor(colorHex))
+
+        // 텍스트 색상 설정
+        val isOverrun = newValue >= 67
+        val textColorHex = if (isOverrun) "#FFFFFF" else "#5E4510"
+        val subtitleColorHex = if (isOverrun) "#F8F8F8" else "#9D8A70" 
+        val percentageColorHex = if (isOverrun) "#C42727" else "#000000"
+
+        binding.tvDate.setTextColor(textColorHex.toColorInt())
+        binding.tvOverrunTitle.setTextColor(textColorHex.toColorInt())
+        binding.divider.setBackgroundColor(textColorHex.toColorInt())
+        binding.tvOverrunSubtitle.setTextColor(subtitleColorHex.toColorInt())
+        binding.tvPercentage.setTextColor(percentageColorHex.toColorInt())
+        binding.tvMax.setTextColor(colorHex.toColorInt())
+
+        // ArcProgressView 애니메이션 업데이트
+        arcProgressView?.let { arcView ->
+            // 부드럽게 차오르는 애니메이션
+            ValueAnimator.ofFloat(oldValue.toFloat(), newValue.toFloat()).apply {
+                duration = 1000L
+                interpolator = DecelerateInterpolator()
+                addUpdateListener {
+                    arcView.percentage = (it.animatedValue as Float)
+                }
+                start()
+            }
+            
+            // 색상 업데이트
+            arcView.setFixedColor(colorHex)
+        }
+    }
+    
+    /**
+     * 5초마다 데이터를 갱신하는 기능을 시작합니다.
+     */
+    private fun startDataUpdates() {
+        // 이전 실행을 먼저 취소
+        stopDataUpdates()
+        
+        updateRunnable = Runnable {
+            // 화면이 표시되고 있는 상태에서만 갱신 실행
+            if (view != null && isAdded) {
+                try {
+                    // 중독 확률 데이터 갱신
+                    loadAddictionProbability()
+                    
+                    // 다음 업데이트 예약 (5초 후)
+                    if (isAdded && view != null) { // 추가 안전장치
+                        handler.postDelayed(updateRunnable!!, 5000)
+                    } else {
+                        stopDataUpdates()
+                    }
+                } catch (e: Exception) {
+                    Log.e("HomeFragment", "Error during update: ${e.message}")
+                    stopDataUpdates() // 오류 발생 시 업데이트 중지
+                }
+            } else {
+                // Fragment가 화면에서 사라졌을 경우 갱신 중지
+                Log.d("HomeFragment", "Fragment no longer visible, stopping updates")
+                stopDataUpdates()
+            }
+        }
+        
+        // 첫 번째 업데이트 예약
+        handler.postDelayed(updateRunnable!!, 5000)
+    }
+    
+    /**
+     * 데이터 갱신을 중지합니다.
+     */
+    private fun stopDataUpdates() {
+        updateRunnable?.let {
+            handler.removeCallbacks(it)
+            updateRunnable = null
+        }
     }
 
     private fun setupUI() {
@@ -138,7 +280,13 @@ class HomeFragment : Fragment() {
             val centerX = offsetX + unionWidth / 2f
             val centerY = offsetY + unionHeight / 2f
 
-            val arcView = ArcProgressView(requireContext()).apply {
+            // 기존 ArcProgressView가 있다면 제거
+            if (arcProgressView != null) {
+                overlayContainer.removeView(arcProgressView)
+            }
+
+            // 새 ArcProgressView 생성
+            arcProgressView = ArcProgressView(requireContext()).apply {
                 layoutParams = FrameLayout.LayoutParams(diameter, diameter)
                 x = centerX - radius
                 y = centerY - radius
@@ -148,14 +296,14 @@ class HomeFragment : Fragment() {
                 setFixedColor(colorHex)
             }
 
-            overlayContainer.addView(arcView)
+            overlayContainer.addView(arcProgressView)
 
             // 부드럽게 차오르는 애니메이션
             ValueAnimator.ofFloat(0f, currentScoreValue.toFloat()).apply {
                 duration = 1200L
                 interpolator = DecelerateInterpolator()
                 addUpdateListener {
-                    arcView.percentage = (it.animatedValue as Float)
+                    arcProgressView?.percentage = (it.animatedValue as Float)
                 }
                 start()
             }
@@ -166,14 +314,30 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // 화면이 다시 보일 때마다 임계값 다시 로드하고 랜덤 값 재생성
+        // 화면이 다시 보일 때마다 임계값과 중독 확률 다시 로드
         loadAlertThreshold()
-        generateRandomScore()
-        setupUI()
+        loadAddictionProbability()
+        
+        // 데이터 갱신 다시 시작
+        startDataUpdates()
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
+        // 데이터 갱신 중지 - View 소멸 전에 반드시 먼저 호출
+        stopDataUpdates()
+        
+        // ArcProgressView 참조 해제
+        arcProgressView = null
+        
+        // View 바인딩 해제
         _binding = null
+        
+        super.onDestroyView()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // 화면이 보이지 않을 때 데이터 갱신 중지
+        stopDataUpdates()
     }
 }
