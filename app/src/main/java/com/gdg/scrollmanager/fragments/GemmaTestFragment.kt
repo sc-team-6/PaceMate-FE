@@ -14,7 +14,10 @@ import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -28,10 +31,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Dispatchers
@@ -140,7 +146,7 @@ class GemmaTestFragment : Fragment() {
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         Log.e("MainScreen", "Model initialization failed: $e")
-                        errorMessage = e.message ?: "알 수 없는 오류가 발생했습니다."
+                        errorMessage = e.message ?: "An unknown error occurred."
                         isLoading = false
                     }
                 }
@@ -255,7 +261,7 @@ class GemmaTestFragment : Fragment() {
                                 }
                             } catch (e: Exception) {
                                 withContext(Dispatchers.Main) {
-                                    errorMessage = e.message ?: "알 수 없는 오류가 발생했습니다."
+                                    errorMessage = e.message ?: "An unknown error occurred."
                                     isLoading = false
                                 }
                             }
@@ -294,8 +300,8 @@ class GemmaTestFragment : Fragment() {
                 
                 // 진행 단계
                 val stageText = when {
-                    progress < 0.5f -> "모델 파일 복사 중..."
-                    else -> "모델 엔진 초기화 중..."
+                    progress < 0.5f -> "Copying model file..."
+                    else -> "Initializing model engine..."
                 }
                 
                 Text(
@@ -324,14 +330,14 @@ class GemmaTestFragment : Fragment() {
                 
                 // 상태 메시지
                 Text(
-                    text = "모델을 초기화 중입니다...",
+                    text = "Initializing the model...",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )
                 
                 Text(
-                    text = "잠시만 기다려주세요",
+                    text = "Please wait a moment",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -353,7 +359,7 @@ class GemmaTestFragment : Fragment() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "로딩 실패",
+                    text = "Loading Failed",
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -365,8 +371,22 @@ class GemmaTestFragment : Fragment() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
                 
-                androidx.compose.material3.Button(onClick = onRetry) {
-                    Text(text = "다시 시도")
+                androidx.compose.material3.Button(
+                    onClick = onRetry,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF6AB9A3) // mint_primary 색상
+                    ),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = "Retry",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White
+                    )
                 }
             }
         }

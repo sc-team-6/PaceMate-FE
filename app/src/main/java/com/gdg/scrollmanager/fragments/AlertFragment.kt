@@ -126,7 +126,7 @@ class AlertFragment : Fragment() {
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Please wait. Do not close this window. It may takes 1-2 minutes",
+                            "Please wait. Do not close this window. It may takes 1-2 minutes.",
                             fontSize = 14.sp,
                             color = Color.Gray,
                             textAlign = TextAlign.Center
@@ -204,7 +204,7 @@ class AlertFragment : Fragment() {
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         Log.e("AlertScreen", "Model initialization failed: $e")
-                        errorMessage = e.message ?: "알 수 없는 오류가 발생했습니다."
+                        errorMessage = e.message ?: "An unknown error occurred."
                         isLoading = false
                     }
                 }
@@ -325,7 +325,7 @@ class AlertFragment : Fragment() {
                                 }
                             } catch (e: Exception) {
                                 withContext(Dispatchers.Main) {
-                                    errorMessage = e.message ?: "알 수 없는 오류가 발생했습니다."
+                                    errorMessage = e.message ?: "An unknown error occurred."
                                     isLoading = false
                                 }
                             }
@@ -366,7 +366,7 @@ class AlertFragment : Fragment() {
                                 } catch (e: Exception) {
                                     Log.e(TAG, "Message generation error: ${e.message}", e)
                                     withContext(Dispatchers.Main) {
-                                        errorMessage = e.message ?: "알 수 없는 오류가 발생했습니다."
+                                        errorMessage = e.message ?: "An unknown error occurred."
                                         isLoading = false
                                         isGeneratingMessage = false
                                         showInferenceDialog = false
@@ -405,8 +405,8 @@ class AlertFragment : Fragment() {
 
                 // 진행 단계
                 val stageText = when {
-                    progress < 0.5f -> "모델 파일 복사 중..."
-                    else -> "모델 엔진 초기화 중..."
+                    progress < 0.5f -> "Copying model file..."
+                    else -> "Initializing model engine..."
                 }
 
                 Text(
@@ -435,14 +435,14 @@ class AlertFragment : Fragment() {
 
                 // 상태 메시지
                 Text(
-                    text = "모델을 초기화 중입니다...",
+                    text = "Initializing the model...",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )
 
                 Text(
-                    text = "잠시만 기다려주세요",
+                    text = "Please wait a moment",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -464,7 +464,7 @@ class AlertFragment : Fragment() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "로딩 실패",
+                    text = "Loading Failed",
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -476,8 +476,22 @@ class AlertFragment : Fragment() {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
 
-                Button(onClick = onRetry) {
-                    Text(text = "다시 시도")
+                Button(
+                    onClick = onRetry,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF6AB9A3) // mint_primary 색상
+                    ),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = "Retry",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White
+                    )
                 }
             }
         }
@@ -608,8 +622,22 @@ class AlertFragment : Fragment() {
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Button(onClick = onGenerateMessage) {
-                                    Text("Analyze Usage Pattern")
+                                Button(
+                                    onClick = onGenerateMessage,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF6AB9A3) // mint_primary 색상
+                                    ),
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Text(
+                                        text = "Analyze Usage Pattern",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White
+                                    )
                                 }
                             }
                         }

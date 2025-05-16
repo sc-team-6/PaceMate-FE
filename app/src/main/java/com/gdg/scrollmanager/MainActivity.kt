@@ -188,12 +188,12 @@ class MainActivity : AppCompatActivity() {
         
         navAlert.setOnClickListener {
             updateNavSelection(1)
-            replaceFragment(AlertFragment())
+            replaceFragment(UsageReportFragment())
         }
         
         navReport.setOnClickListener {
             updateNavSelection(2)
-            replaceFragment(UsageReportFragment())
+            replaceFragment(AlertFragment())
         }
         
         navSettings.setOnClickListener {
