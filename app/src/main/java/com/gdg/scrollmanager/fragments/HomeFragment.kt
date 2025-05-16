@@ -35,12 +35,22 @@ class HomeFragment : Fragment() {
     // 현재 Overrun Score (중독 확률)
     private var currentScoreValue: Int = 0
     
+    // 게이지의 최소값과 최대값
+    private var minScore: Int = 0
+    private var maxScore: Int = 0
+    
     // 5초마다 데이터를 갱신하기 위한 핸들러
     private val handler = Handler(Looper.getMainLooper())
     private var updateRunnable: Runnable? = null
     
     // ArcProgressView 참조 저장
     private var arcProgressView: ArcProgressView? = null
+    
+    // 영속성 저장을 위한 컴파닌 클래스
+    companion object {
+        private const val PREF_MAX_SCORE = "max_score"
+        private const val PREF_MIN_SCORE = "min_score"
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -152,6 +162,9 @@ class HomeFragment : Fragment() {
         binding.tvPercentage.setTextColor(percentageColorHex.toColorInt())
         binding.tvMax.setTextColor(colorHex.toColorInt())
 
+        // 최소값과 최대값 업데이트
+        updateMinMaxValues(newValue)
+
         // ArcProgressView 애니메이션 업데이트
         arcProgressView?.let { arcView ->
             // 부드럽게 차오르는 애니메이션
@@ -166,6 +179,23 @@ class HomeFragment : Fragment() {
             
             // 색상 업데이트
             arcView.setFixedColor(colorHex)
+        }
+    }
+    
+    /**
+     * 최소값과 최대값을 조정하고 표시합니다.
+     */
+    private fun updateMinMaxValues(currentValue: Int) {
+        // 앱이 재시작되었을 때마다 최소/최대값 및 최근 값이 초기화됨
+        // 현재 값을 최소값과 최대값으로 사용
+        if (minScore == 0 || currentValue < minScore) {
+            minScore = currentValue
+            binding.tvMin.text = "$minScore%"
+        }
+        
+        if (currentValue > maxScore) {
+            maxScore = currentValue
+            binding.tvMax.text = "$maxScore%"
         }
     }
     
@@ -232,9 +262,13 @@ class HomeFragment : Fragment() {
         // Alert Level 표시
         binding.tvAlertLevel.text = "$alertThresholdValue%"
 
-        // MAX 값 설정 (Alert Level + 10%, 최대 100%)
-        val maxValue = minOf(alertThresholdValue + 10, 100)
-        binding.tvMax.text = "$maxValue%"
+        // MIN 값 설정 (앱이 재시작되면 초기화)
+        minScore = currentScoreValue
+        binding.tvMin.text = "$minScore%"
+
+        // MAX 값 설정 (최초에는 현재 값으로 초기화)
+        maxScore = currentScoreValue
+        binding.tvMax.text = "$maxScore%"
 
         // 상태 텍스트 배경 둥글게 설정
         val statusBg = GradientDrawable().apply {
