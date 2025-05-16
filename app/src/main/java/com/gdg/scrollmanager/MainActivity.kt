@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment
 import com.gdg.scrollmanager.databinding.ActivityMainBinding
 import com.gdg.scrollmanager.R
 import com.gdg.scrollmanager.fragments.*
+import com.gdg.scrollmanager.services.UsageDataCollectorService
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -69,6 +70,17 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             replaceFragment(HomeFragment())
         }
+        
+        // 백그라운드 데이터 수집 서비스 시작
+        startUsageDataCollectorService()
+    }
+    
+    // 백그라운드 서비스 시작
+    private fun startUsageDataCollectorService() {
+        if (arePermissionsGranted()) {
+            UsageDataCollectorService.startService(this)
+            Log.d("MainActivity", "UsageDataCollectorService 시작됨")
+        }
     }
     
     override fun onResume() {
@@ -78,6 +90,9 @@ class MainActivity : AppCompatActivity() {
         // 이미 권한 화면으로 이동했거나 레이아웃이 초기화되지 않은 경우에는 체크하지 않음
         if (!isDebugMode && ::binding.isInitialized && !arePermissionsGranted()) {
             navigateToPermissions()
+        } else if (::binding.isInitialized && arePermissionsGranted()) {
+            // 권한이 있으면 서비스 시작
+            startUsageDataCollectorService()
         }
     }
     
@@ -248,5 +263,11 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // 앱이 완전히 종료될 때 서비스도 종료 (필요에 따라 주석 처리 가능)
+        // UsageDataCollectorService.stopService(this)
     }
 }

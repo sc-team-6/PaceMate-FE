@@ -48,6 +48,12 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     
+    // LifecycleService 의존성 추가
+    implementation("androidx.lifecycle:lifecycle-service:2.7.0")
+    
+    // Gson 추가
+    implementation("com.google.code.gson:gson:2.10.1")
+    
     // DataStore 추가
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     
