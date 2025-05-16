@@ -91,6 +91,9 @@ dependencies {
     
     // MediaPipe 
     implementation("com.google.mediapipe:tasks-genai:0.10.22")
+    
+    // Google AI SDK for Gemma models
+    implementation("com.google.ai.client.generativeai:generativeai:0.2.2")
 
     // Test 의존성
     testImplementation(libs.junit)

@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import android.widget.Toast
 import com.gdg.scrollmanager.R
+import com.gdg.scrollmanager.utils.AddictionProbabilityManager
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -130,7 +131,10 @@ class HomeFragment : Fragment() {
                 // 확률 값 추출 (0-100 사이의 값으로 변환)
                 val probability = predictionResult.second.toInt()
                 
-                Log.d("HomeFragment", "Loaded addiction probability: $probability%")
+                Log.d("HomeFragment", "Loaded addiction probability from DataStore: $probability%")
+                
+                // AddictionProbabilityManager에 중독 확률 저장
+                AddictionProbabilityManager.setAddictionProbability(requireContext(), probability)
                 
                 // 항상 최소/최대값 업데이트 먼저 수행
                 // 현재 스코어가 변경되기 전에 먼저 최소/최대값 업데이트
@@ -153,8 +157,18 @@ class HomeFragment : Fragment() {
             } catch (e: Exception) {
                 Log.e("HomeFragment", "Error loading addiction probability: ${e.message}")
                 
-                // 문제가 있을 경우 0으로 설정
-                currentScoreValue = 0
+                // 문제가 있을 경우 현재 저장된 중독 확률 값 가져오기
+                val savedProbability = AddictionProbabilityManager.getAddictionProbability(requireContext())
+                
+                // UI 업데이트가 필요하면 수행
+                if (savedProbability != currentScoreValue) {
+                    val oldValue = currentScoreValue
+                    currentScoreValue = savedProbability
+                    
+                    if (_binding != null && isAdded && view != null) {
+                        updateUIWithNewScore(oldValue, savedProbability)
+                    }
+                }
             }
         }
     }

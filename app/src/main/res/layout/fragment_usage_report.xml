@@ -303,6 +303,15 @@
                     android:textColor="@android:color/black"
                     android:textSize="14sp" />
 
+                <Button
+                    android:id="@+id/btn_generate_report"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="리포트 생성하기"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

@@ -188,7 +188,7 @@ class MainActivity : AppCompatActivity() {
         
         navAlert.setOnClickListener {
             updateNavSelection(1)
-            // Alert 프래그먼트 추가 필요
+            replaceFragment(AlertFragment())
         }
         
         navReport.setOnClickListener {
