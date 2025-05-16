@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
@@ -57,17 +58,17 @@ class AlertFragment : Fragment() {
     companion object {
         const val TAG = "AlertFragment"
     }
-    
+
     // 코루틴 작업을 관리하기 위한 Job 객체
     private var messageGenerationJob: kotlinx.coroutines.Job? = null
-    
+
     override fun onDestroyView() {
         super.onDestroyView()
         // Fragment가 파괴될 때 실행 중인 코루틴 작업 취소
         messageGenerationJob?.cancel()
         messageGenerationJob = null
     }
-    
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -83,10 +84,11 @@ class AlertFragment : Fragment() {
                         MainScreen()
                     }
                 }
+                }
             }
         }
-    }
-    
+
+
     @Composable
     fun MainScreen() {
         var isLoading by remember { mutableStateOf(true) }
@@ -95,14 +97,42 @@ class AlertFragment : Fragment() {
         var loadingProgress by remember { mutableStateOf(0f) }
         var isModelFileCopyNeeded by remember { mutableStateOf(true) }
         var isGeneratingMessage by remember { mutableStateOf(false) } // 메시지 생성 중인지 상태 추가
-        
+        var showInferenceDialog by remember { mutableStateOf(false) } // 추론 중 모달 다이얼로그 표시 여부
+
         val coroutineScope = rememberCoroutineScope()
         val context = LocalContext.current
-        
+
         // 중독 확률 관리
         var addictionProbability by remember { mutableStateOf(getAddictionProbability(context)) }
         var encouragementMessage by remember { mutableStateOf("") }
-        
+
+        if (showInferenceDialog) {
+            AlertDialog(
+                onDismissRequest = { /* 백버튼으로 닫힐 수 없게 설정 */ },
+                title = { Text("메시지 생성 중") },
+                text = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth().padding(16.dp)
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.padding(bottom = 16.dp))
+                        Text(
+                            "인공지능이 메시지를 생성하고 있습니다.",
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "잠시만 기다려주세요. 이 창을 닫지 마세요.",
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                },
+                confirmButton = { /* 확인 버튼 없음 */ },
+                dismissButton = { /* 취소 버튼 없음 */ }
+            )
+        }
         // 모델 파일이 완전하게 복사되었는지 확인하는 함수
         fun isModelFileCompletelyExists(context: Context): Boolean {
             val modelFile = File(context.filesDir, com.gdg.scrollmanager.gemma.Model.MODEL_FILENAME)
@@ -110,7 +140,7 @@ class AlertFragment : Fragment() {
                 Log.d("AlertScreen", "Model file doesn't exist in internal storage")
                 return false
             }
-            
+
             try {
                 // Assets에 있는 원본 파일의 크기 확인 - open + available 방식 적용
                 var assetFileSize = 0L
@@ -119,10 +149,10 @@ class AlertFragment : Fragment() {
                 }
                 // 내부 저장소에 있는 파일의 크기
                 val internalFileSize = modelFile.length()
-                
+
                 Log.d("AlertScreen", "Asset file size (using open+available): $assetFileSize bytes (${assetFileSize / (1024 * 1024)} MB)")
                 Log.d("AlertScreen", "Internal file size: $internalFileSize bytes (${internalFileSize / (1024 * 1024)} MB)")
-                
+
                 // 두 파일의 크기가 같은지 확인
                 if (assetFileSize != internalFileSize) {
                     Log.w("AlertScreen", "Model file exists but has different size: $internalFileSize bytes (expected: $assetFileSize bytes)")
@@ -132,7 +162,7 @@ class AlertFragment : Fragment() {
                     Log.d("AlertScreen", "Deleted incorrect size model file: $deleted")
                     return false
                 }
-                
+
                 Log.d("AlertScreen", "Model file exists and has correct size: $internalFileSize bytes - validation PASSED ✓")
                 return true
             } catch (e: Exception) {
@@ -148,7 +178,7 @@ class AlertFragment : Fragment() {
                 return false
             }
         }
-        
+
         // 모델 초기화가 필요할 경우 초기화 프로세스 시작하는 함수
         val startModelInitialization = {
             coroutineScope.launch(Dispatchers.IO) {
@@ -164,7 +194,7 @@ class AlertFragment : Fragment() {
                             Log.d("AlertScreen", "Model file doesn't exist or is incomplete, showing detailed progress")
                         }
                     }
-                    
+
                     // 모델 초기화 - 여기서 진행률이 업데이트됨
                     InferenceModel.getInstance(context)
                 } catch (e: Exception) {
@@ -176,7 +206,7 @@ class AlertFragment : Fragment() {
                 }
             }
         }
-        
+
         // 컴포저블 초기화 시 이미 모델이 로드되어 있는지 확인
         LaunchedEffect(Unit) {
             try {
@@ -185,30 +215,33 @@ class AlertFragment : Fragment() {
                     Log.d("AlertScreen", "Model already initialized, skipping loading screen")
                     isModelInitialized = true
                     isLoading = false
-                    
+
                     // 모델이 초기화되어 있고 중독 확률이 있으면 자동으로 메시지 생성
                     if (addictionProbability > 0 && !isGeneratingMessage) {
                         isGeneratingMessage = true
                         messageGenerationJob = coroutineScope.launch {
-                            generateEncouragementMessage(
-                                context,
-                                addictionProbability,
-                                onStart = { /* 이미 로딩 화면은 처리됨 */ },
-                                onComplete = { result -> 
-                                    encouragementMessage = result
-                                    isGeneratingMessage = false
-                                },
-                                onError = { errorMsg ->
-                                    errorMessage = errorMsg
-                                    isGeneratingMessage = false
-                                }
-                            )
+                        showInferenceDialog = true // 추론 시작 전 모달 표시
+                        generateEncouragementMessage(
+                        context,
+                        addictionProbability,
+                        onStart = { /* 이미 로딩 화면은 처리됨 */ },
+                        onComplete = { result ->
+                        encouragementMessage = result
+                            isGeneratingMessage = false
+                            showInferenceDialog = false // 추론 완료 시 모달 다이얼로그 닫기
+                        },
+                        onError = { errorMsg ->
+                            errorMessage = errorMsg
+                                isGeneratingMessage = false
+                                                        showInferenceDialog = false // 오류 발생 시에도 모달 다이얼로그 닫기
+                                                    }
+                                                )
                         }
                     }
                 } else {
                     // 모델 파일 존재 여부 미리 확인
                     isModelFileCopyNeeded = !isModelFileCompletelyExists(context)
-                    
+
                     // 없다면 진행률 Flow 구독 시작
                     // 글로벌 진행률 Flow 구독
                     Log.d("AlertScreen", "Model needs initialization, starting progress monitoring")
@@ -217,7 +250,7 @@ class AlertFragment : Fragment() {
                         withContext(Dispatchers.Main) {
                             Log.d("AlertScreen", "Received global progress update: $progress")
                             loadingProgress = progress
-                            
+
                             // 초기화 완료 확인
                             if (progress >= 1.0f) {
                                 try {
@@ -226,7 +259,7 @@ class AlertFragment : Fragment() {
                                     isModelInitialized = true
                                     isLoading = false
                                     Log.d("AlertScreen", "Model initialization completed")
-                                    
+
                                     // 모델 초기화가 완료되면 응원 메시지 생성
                                     if (addictionProbability > 0 && !isGeneratingMessage) {
                                         isGeneratingMessage = true
@@ -235,7 +268,7 @@ class AlertFragment : Fragment() {
                                                 context,
                                                 addictionProbability,
                                                 onStart = { /* 이미 로딩 화면은 처리됨 */ },
-                                                onComplete = { result -> 
+                                                onComplete = { result ->
                                                     encouragementMessage = result
                                                     isGeneratingMessage = false
                                                 },
@@ -261,19 +294,19 @@ class AlertFragment : Fragment() {
                 startModelInitialization()
             }
         }
-        
+
         // 모델 초기화가 필요한 경우만 초기화 실행
         LaunchedEffect(Unit) {
             if (isLoading && !isModelInitialized && errorMessage == null) {
                 startModelInitialization()
             }
         }
-        
+
         // 디버그 로그를 위한 효과
         LaunchedEffect(loadingProgress) {
             Log.d("AlertScreen", "Progress updated in UI: $loadingProgress")
         }
-        
+
         // 상태에 따라 적절한 화면 표시
         when {
             isLoading -> {
@@ -292,7 +325,7 @@ class AlertFragment : Fragment() {
                         isLoading = true
                         errorMessage = null
                         loadingProgress = 0f
-                        
+
                         coroutineScope.launch {
                             try {
                                 // 앱 캐시 정리
@@ -302,24 +335,24 @@ class AlertFragment : Fragment() {
                                         .edit()
                                         .putBoolean("init_complete", false)
                                         .apply()
-                                    
+
                                     // 캐시 정리
                                     context.cacheDir.listFiles()?.forEach { it.delete() }
-                                    
+
                                     // TFLite 관련 캐시 정리
                                     val searchDirs = listOf(context.cacheDir, context.filesDir)
                                     searchDirs.forEach { dir ->
                                         dir.listFiles { file ->
-                                            file.name.contains(".xnnpack_cache") || 
+                                            file.name.contains(".xnnpack_cache") ||
                                             file.name.contains(".tflite") ||
                                             file.name.endsWith(".cache")
                                         }?.forEach { file ->
                                             file.delete()
                                         }
                                     }
-                                    
+
                                     Log.d("AlertScreen", "Cleared all cache before retry")
-                                    
+
                                     // 모델 재설정
                                     InferenceModel.resetInstance(context)
                                 }
@@ -343,21 +376,24 @@ class AlertFragment : Fragment() {
                         if (!isGeneratingMessage) {
                             isGeneratingMessage = true
                             messageGenerationJob = coroutineScope.launch {
-                                generateEncouragementMessage(
-                                    context,
-                                    addictionProbability,
-                                    onStart = { isLoading = true },
-                                    onComplete = { result -> 
-                                        encouragementMessage = result
-                                        isLoading = false
-                                        isGeneratingMessage = false
-                                    },
-                                    onError = { errorMsg ->
-                                        errorMessage = errorMsg
-                                        isLoading = false
-                                        isGeneratingMessage = false
-                                    }
-                                )
+                            showInferenceDialog = true // 추론 시작 전 모달 표시
+                            generateEncouragementMessage(
+                            context,
+                            addictionProbability,
+                            onStart = { isLoading = true },
+                            onComplete = { result ->
+                            encouragementMessage = result
+                            isLoading = false
+                                isGeneratingMessage = false
+                                showInferenceDialog = false // 추론 완료 시 모달 다이얼로그 닫기
+                            },
+                            onError = { errorMsg ->
+                            errorMessage = errorMsg
+                                isLoading = false
+                                    isGeneratingMessage = false
+                                                showInferenceDialog = false // 오류 발생 시에도 모달 다이얼로그 닫기
+                                            }
+                                        )
                             }
                         }
                     }
@@ -365,7 +401,7 @@ class AlertFragment : Fragment() {
             }
         }
     }
-    
+
     @Composable
     fun RealTimeLoadingScreen(progress: Float) {
         Box(
@@ -382,19 +418,19 @@ class AlertFragment : Fragment() {
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
-                
+
                 // 프로그레스 바
                 LinearProgressIndicator(
                     progress = { progress.coerceIn(0f, 1f) },
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
-                
+
                 // 진행 단계
                 val stageText = when {
                     progress < 0.5f -> "모델 파일 복사 중..."
                     else -> "모델 엔진 초기화 중..."
                 }
-                
+
                 Text(
                     text = stageText,
                     style = MaterialTheme.typography.bodyLarge
@@ -418,7 +454,7 @@ class AlertFragment : Fragment() {
                     modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.primary
                 )
-                
+
                 // 상태 메시지
                 Text(
                     text = "모델을 초기화 중입니다...",
@@ -426,7 +462,7 @@ class AlertFragment : Fragment() {
                     color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Text(
                     text = "잠시만 기다려주세요",
                     style = MaterialTheme.typography.bodyLarge,
@@ -454,21 +490,21 @@ class AlertFragment : Fragment() {
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.error
                 )
-                
+
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
-                
+
                 Button(onClick = onRetry) {
                     Text(text = "다시 시도")
                 }
             }
         }
     }
-    
+
     @Composable
     fun AddictionProbabilityScreen(
         addictionProbability: Int,
@@ -485,7 +521,7 @@ class AlertFragment : Fragment() {
             verticalArrangement = Arrangement.Top
         ) {
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // 제목
             Text(
                 text = "디지털 중독 분석 결과",
@@ -494,9 +530,9 @@ class AlertFragment : Fragment() {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // 중독 확률 표시
             Box(
                 modifier = Modifier
@@ -515,18 +551,18 @@ class AlertFragment : Fragment() {
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium
                     )
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     Text(
                         text = "$addictionProbability%",
                         fontSize = 48.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF70BCA4)
                     )
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     val riskLevel = when {
                         addictionProbability >= 80 -> "매우 높음"
                         addictionProbability >= 60 -> "높음"
@@ -534,7 +570,7 @@ class AlertFragment : Fragment() {
                         addictionProbability >= 20 -> "낮음"
                         else -> "매우 낮음"
                     }
-                    
+
                     Text(
                         text = "위험도: $riskLevel",
                         fontSize = 16.sp,
@@ -542,9 +578,9 @@ class AlertFragment : Fragment() {
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // Gemma 응원 메시지 표시 영역
             Box(
                 modifier = Modifier
@@ -565,9 +601,9 @@ class AlertFragment : Fragment() {
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    
+
                     if (encouragementMessage.isEmpty()) {
                         if (isGeneratingMessage) {
                             // 생성 중인 경우 로딩 표시
@@ -601,9 +637,9 @@ class AlertFragment : Fragment() {
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // 도움말 텍스트
             Text(
                 text = "디지털 사용 패턴을 분석하여 중독 확률을 계산했습니다. 건강한 디지털 생활을 위한 맞춤형 조언을 받아보세요.",
@@ -612,16 +648,16 @@ class AlertFragment : Fragment() {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
-    
+
     // 중독 확률을 가져오는 함수
     private fun getAddictionProbability(context: Context): Int {
         return AddictionProbabilityManager.getAddictionProbability(context)
     }
-    
+
     // 응원 메시지 생성 함수
     private suspend fun generateEncouragementMessage(
         context: Context,
@@ -632,14 +668,14 @@ class AlertFragment : Fragment() {
     ) {
         withContext(Dispatchers.IO) {
             onStart()
-            
+
             try {
                 // 현재 코루틴이 취소되었는지 확인
                 ensureActive()
-                
+
                 // Gemma 모델 인스턴스 가져오기
                 val model = InferenceModel.getInstance(context)
-                
+
                 // 확률에 따른 프롬프트 생성
                 val prompt = when {
                     probability >= 80 -> "사용자의 디지털 중독 확률이 ${probability}%로 매우 높습니다. 걱정하지 마세요. 중독을 극복할 수 있는 방법과 함께 따뜻한 응원 메시지를 100자 이내로 작성해주세요."
@@ -648,9 +684,9 @@ class AlertFragment : Fragment() {
                     probability >= 20 -> "사용자의 디지털 중독 확률이 ${probability}%로 낮은 편입니다. 건강한 디지털 사용 습관을 칭찬하고 이를 유지할 수 있는 팁과 함께 응원 메시지를 100자 이내로 작성해주세요."
                     else -> "사용자의 디지털 중독 확률이 ${probability}%로 매우 낮습니다. 아주 건강한 디지털 사용 습관을 가지고 있습니다. 이런 좋은 습관을 계속 유지할 수 있도록 격려하는 메시지를 100자 이내로 작성해주세요."
                 }
-                
+
                 Log.d(AlertFragment.TAG, "Generating message with prompt: $prompt")
-                
+
                 // 응답 생성
                 var message = ""
                 val asyncFuture = model.generateResponseAsync(prompt) { partialResult, done ->
@@ -658,7 +694,7 @@ class AlertFragment : Fragment() {
                         message += partialResult
                     }
                 }
-                
+
                 // 취소 감지 설정
                 try {
                     // 현재 코루틴이 취소되면 빠져나감
@@ -668,17 +704,17 @@ class AlertFragment : Fragment() {
                         }
                         delay(100) // 100ms마다 확인
                     }
-                    
+
                     // 코루틴이 취소되었으면 작업도 취소
                     if (!isActive) {
                         Log.d(AlertFragment.TAG, "Coroutine cancelled, cancelling message generation")
                         // asyncFuture는 직접 취소 메서드가 없을 수 있음 - 생략
                         throw CancellationException("Message generation cancelled")
                     }
-                    
+
                     // 정상적으로 완료된 경우
                     asyncFuture.get()
-                    
+
                     withContext(Dispatchers.Main) {
                         if (isActive) { // 여전히 활성 상태인 경우에만
                             Log.d(AlertFragment.TAG, "Generated message: $message")
@@ -689,7 +725,7 @@ class AlertFragment : Fragment() {
                     Log.d(AlertFragment.TAG, "Message generation was cancelled")
                     throw e  // 코루틴 취소 처리를 위해 다시 throw
                 }
-                
+
             } catch (e: CancellationException) {
                 Log.d(AlertFragment.TAG, "Message generation cancelled: ${e.message}")
                 throw e  // 코루틴 취소 처리를 위해 다시 throw
