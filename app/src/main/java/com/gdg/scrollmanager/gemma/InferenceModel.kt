@@ -18,7 +18,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 /** The maximum number of tokens the model can process. */
-const val MAX_TOKENS = 1024
+const val MAX_TOKENS = 2048
 
 /**
  * An offset in tokens that we use to ensure that the model always has the ability to respond when
@@ -491,6 +491,33 @@ class InferenceModel private constructor(
         
         llmInferenceSession.addQueryChunk(prompt)
         return llmInferenceSession.generateResponseAsync(progressListener)
+    }
+    
+    // LLM이 추론을 수행할 준비가 되었는지 확인하는 함수
+    fun isLlmReady(): Boolean {
+        return isInitialized && ::llmInferenceSession.isInitialized
+    }
+    
+    // 세션이 이미 사용 중인지 확인하는 함수
+    fun isSessionBusy(): Boolean {
+        // 세션이 초기화되지 않았으면 사용 중이 아님
+        if (!isInitialized || !::llmInferenceSession.isInitialized) {
+            return false
+        }
+        
+        // 세션이 사용 중인지 확인하는 방법이 직접적으로 제공되지 않으므로
+        // 간접적으로 확인 (isBusy 필드가 있다면 사용 가능)
+        try {
+            // 세션에 대한 짧은 테스트 질의 시도
+            val testPrompt = " "  // 공백 한 칸
+            llmInferenceSession.sizeInTokens(testPrompt)
+            return false  // 성공하면 사용 중이 아님
+        } catch (e: Exception) {
+            // 오류 발생 시 "Previous invocation still processing" 문자열 확인
+            val errorMessage = e.message ?: ""
+            return errorMessage.contains("Previous invocation still processing") ||
+                   errorMessage.contains("Wait for done=true")
+        }
     }
 
     fun estimateTokensRemaining(prompt: String): Int {
