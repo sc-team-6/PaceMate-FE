@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 스플래시 화면 테마 -->
+    <style name="Theme.Splash" parent="Theme.Material3.Light.NoActionBar">
+        <!-- 액션바 비활성화 -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        
+        <!-- 상태바와 네비게이션 바 설정 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        
+        <!-- 상태바와 네비게이션 바의 아이콘 색상 -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        
+        <!-- 배경 설정 -->
+        <item name="android:windowBackground">@drawable/background_splash</item>
+        
+        <!-- 전체 화면 모드 -->
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+    </style>
+</resources>
