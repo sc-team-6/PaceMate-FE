@@ -109,7 +109,7 @@
                 android:id="@+id/tvDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="We've set this level based on your usage and motivation. Let's work together to bring it down over time!"
+                android:text="We've set this alert level between 50% and 75% based on your usage and motivation. Let's work together to bring it down over time!"
                 android:textSize="16sp"
                 android:textColor="#666666"
                 android:layout_marginTop="30dp"

@@ -52,7 +52,7 @@ class OnboardingUsageFragment : Fragment() {
     
     /**
      * 사용자 응답을 기반으로 알림 임계값을 계산
-     * 이 함수는 이전 설문의 응답을 분석하여 60%-90% 범위 내에서 적절한 값을 계산합니다.
+     * 이 함수는 이전 설문의 응답을 분석하여 50%-75% 범위 내에서 적절한 값을 계산합니다.
      */
     private fun calculateAlertThreshold() {
         val sharedPref = requireActivity().getSharedPreferences("MyAppPrefs", 0)
@@ -67,8 +67,8 @@ class OnboardingUsageFragment : Fragment() {
         val sleepStart = sharedPref.getString("sleep_time", "22:00") ?: "22:00"
         val sleepEnd = sharedPref.getString("wake_time", "07:00") ?: "07:00"
         
-        // 기본 임계값: 75%
-        var baseThreshold = 75
+        // 기본 임계값: 60%
+        var baseThreshold = 60
         
         // 1. 화면 시간에 따른 조정
         when (screenTime) {
@@ -92,8 +92,8 @@ class OnboardingUsageFragment : Fragment() {
             "keep_current" -> baseThreshold += 5 // 현재 수준 유지 -> 적은 알림 (높은 임계값)
         }
         
-        // 최종 임계값을 60%-90% 범위 내로 제한
-        alertThresholdPercentage = baseThreshold.coerceIn(60, 90)
+        // 최종 임계값을 50%-75% 범위 내로 제한
+        alertThresholdPercentage = baseThreshold.coerceIn(50, 75)
     }
     
     private fun saveAlertThreshold() {

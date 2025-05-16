@@ -13,7 +13,7 @@ class PreferenceManager(context: Context) {
     companion object {
         private const val PREF_NAME = "app_usage_stats_prefs"
         private const val KEY_ALERT_THRESHOLD = "alert_threshold"
-        private const val DEFAULT_ALERT_THRESHOLD = 80
+        private const val DEFAULT_ALERT_THRESHOLD = 60
         
         // 24시간 기록 관련 키
         private const val KEY_MIN_SCORE = "min_score_24h"

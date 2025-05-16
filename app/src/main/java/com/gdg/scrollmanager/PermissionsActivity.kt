@@ -26,7 +26,6 @@ class PermissionsActivity : AppCompatActivity() {
     private lateinit var btnUsageStats: Button
     private lateinit var btnAccessibility: Button
     private lateinit var btnContinue: Button
-    private lateinit var btnDebugSkip: Button
     
     private lateinit var sharedPreferences: SharedPreferences
     
@@ -40,7 +39,6 @@ class PermissionsActivity : AppCompatActivity() {
         btnUsageStats = findViewById(R.id.btn_usage_stats)
         btnAccessibility = findViewById(R.id.btn_accessibility)
         btnContinue = findViewById(R.id.btn_continue)
-        btnDebugSkip = findViewById(R.id.btn_debug_skip)
 
         // 권한 설정 버튼 리스너
         btnUsageStats.setOnClickListener {
@@ -51,7 +49,7 @@ class PermissionsActivity : AppCompatActivity() {
 
             Toast.makeText(
                 this,
-                "Find 'StopScrolling' and enable the usage access permission.",
+                "Find 'Pace Mate' and enable the usage access permission.",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -60,8 +58,8 @@ class PermissionsActivity : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setTitle("Enable Accessibility Service")
                 .setMessage(
-                    "To use StopScrolling properly, please enable its accessibility service:\n\n" +
-                            "👉 Settings > Accessibility > Installed apps > StopScrolling > Enable"
+                    "To use Pace Mate properly, please enable its accessibility service:\n\n" +
+                            "👉 Settings > Accessibility > Installed apps > Pace Mate > Enable"
                 )
                 .setPositiveButton("Go to Settings") { _, _ ->
                     val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
@@ -75,24 +73,11 @@ class PermissionsActivity : AppCompatActivity() {
         
         // 계속하기 버튼 리스너
         btnContinue.setOnClickListener {
-            startMainActivity()
-        }
-        
-        // 디버그용 SKIP 버튼 리스너
-        btnDebugSkip.setOnClickListener {
-            // 디버그 모드임을 표시하는 토스트 메시지
-            Toast.makeText(
-                this,
-                "DEBUG MODE: Skipping permissions check",
-                Toast.LENGTH_SHORT
-            ).show()
-            
-            // 권한을 가진 것으로 간주하고 메인 화면으로 진행
+            // 권한이 부여되었음을 기록
             sharedPreferences.edit()
                 .putBoolean("permissionsGranted", true)
-                .putBoolean("debugMode", true)  // 디버그 모드 플래그 설정
                 .apply()
-            
+                
             startMainActivity()
         }
         
@@ -123,22 +108,22 @@ class PermissionsActivity : AppCompatActivity() {
         
         // 사용 통계 권한 상태 업데이트
         if (hasUsageStats) {
-            tvUsageStatsStatus.text = "허용됨"
+            tvUsageStatsStatus.text = "Granted"
             tvUsageStatsStatus.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
             btnUsageStats.visibility = View.GONE
         } else {
-            tvUsageStatsStatus.text = "필요"
+            tvUsageStatsStatus.text = "Required"
             tvUsageStatsStatus.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
             btnUsageStats.visibility = View.VISIBLE
         }
         
         // 접근성 서비스 상태 업데이트
         if (hasAccessibility) {
-            tvAccessibilityStatus.text = "허용됨"
+            tvAccessibilityStatus.text = "Granted"
             tvAccessibilityStatus.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
             btnAccessibility.visibility = View.GONE
         } else {
-            tvAccessibilityStatus.text = "필요"
+            tvAccessibilityStatus.text = "Required"
             tvAccessibilityStatus.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
             btnAccessibility.visibility = View.VISIBLE
         }
@@ -146,17 +131,13 @@ class PermissionsActivity : AppCompatActivity() {
         // 계속하기 버튼 상태 업데이트 - 두 권한 모두 필요
         btnContinue.isEnabled = hasUsageStats && hasAccessibility
         
+        // 계속하기 버튼 배경 설정
         if (hasUsageStats && hasAccessibility) {
-            btnContinue.text = "계속하기"
-        } else if (hasUsageStats) {
-            btnContinue.text = "접근성 권한 필요"
-            btnContinue.isEnabled = false
-        } else if (hasAccessibility) {
-            btnContinue.text = "사용 통계 권한 필요"
-            btnContinue.isEnabled = false
+            btnContinue.text = "Next"
+            btnContinue.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.mint_primary))
         } else {
-            btnContinue.text = "모든 권한 필요"
-            btnContinue.isEnabled = false
+            btnContinue.text = "Next"
+            btnContinue.setBackgroundTintList(ContextCompat.getColorStateList(this, android.R.color.darker_gray))
         }
     }
     

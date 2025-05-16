@@ -321,170 +321,26 @@
             android:orientation="vertical"
             android:layout_marginHorizontal="20dp">
 
-            <!-- YouTube -->
+            <!-- 앱 사용 목록 - 동적으로 생성됨 -->
             <LinearLayout
+                android:id="@+id/dynamic_app_list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="12dp">
-
-                <ImageView
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
-                    android:src="@drawable/ic_youtube"
-                    android:padding="0dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:text="Youtube"
-                    android:textColor="#6B3A00"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="3dp"
-                    android:layout_weight="1"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginHorizontal="12dp"
-                    android:background="@drawable/dotted_line"
-                    android:layerType="software" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="56%"
-                    android:textColor="#6B3A00"
-                    android:textSize="17sp"
-                    android:textStyle="bold"
-                    android:paddingHorizontal="4dp" />
+                android:orientation="vertical">
+                <!-- 여기에 앱 목록이 동적으로 추가됩니다 -->
             </LinearLayout>
-
-            <!-- TikTok -->
-            <LinearLayout
+            
+            <!-- 데이터 없을 때 표시될 텍스트 -->
+            <TextView
+                android:id="@+id/tv_no_app_data"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="12dp">
-
-                <ImageView
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
-                    android:src="@drawable/ic_tiktok"
-                    android:padding="0dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:text="TikTok"
-                    android:textColor="#6B3A00"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="3dp"
-                    android:layout_weight="1"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginHorizontal="12dp"
-                    android:background="@drawable/dotted_line"
-                    android:layerType="software" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="40%"
-                    android:textColor="#6B3A00"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Instagram -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="12dp">
-
-                <ImageView
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
-                    android:src="@drawable/ic_instagram"
-                    android:padding="0dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:text="Instagram"
-                    android:textColor="#6B3A00"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="3dp"
-                    android:layout_weight="1"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginHorizontal="12dp"
-                    android:background="@drawable/dotted_line"
-                    android:layerType="software" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="20%"
-                    android:textColor="#6B3A00"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- e-football -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="12dp">
-
-                <ImageView
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
-                    android:src="@drawable/ic_football"
-                    android:padding="0dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:text="e-football"
-                    android:textColor="#6B3A00"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="3dp"
-                    android:layout_weight="1"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginHorizontal="12dp"
-                    android:background="@drawable/dotted_line"
-                    android:layerType="software" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="13%"
-                    android:textColor="#6B3A00"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="앱 사용 데이터를 수집 중입니다..."
+                android:textColor="#888888"
+                android:textSize="16sp"
+                android:textAlignment="center"
+                android:padding="20dp"
+                android:visibility="gone" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

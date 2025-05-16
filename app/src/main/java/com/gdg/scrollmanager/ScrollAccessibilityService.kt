@@ -4,7 +4,6 @@ import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.floatPreferencesKey
 import com.gdg.scrollmanager.utils.DataStoreUtils
 import com.gdg.scrollmanager.utils.scrollDataStore
 import kotlinx.coroutines.CoroutineScope
@@ -12,6 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class ScrollAccessibilityService : AccessibilityService() {
+
+    override fun onCreate() {
+        super.onCreate()
+        // 알림 제거 - AccessibilityService는 별도의 알림 없이도 실행 가능
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {

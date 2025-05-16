@@ -48,7 +48,7 @@ class UsageDataCollectorService : Service() {
     
     // 서비스 ID
     private val NOTIFICATION_ID = 1001
-    private val CHANNEL_ID = "usage_data_service"
+    private val CHANNEL_ID = "pace_mate_service"
     
     // 코루틴 스코프
     private val serviceJob = SupervisorJob()
@@ -110,8 +110,8 @@ class UsageDataCollectorService : Service() {
     
     private fun startForeground() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "사용 패턴 모니터링"
-            val descriptionText = "휴대폰 사용 패턴 데이터를 수집합니다"
+            val name = "Pace Mate Service"
+            val descriptionText = "Tracks your device usage patterns"
             val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
@@ -122,9 +122,9 @@ class UsageDataCollectorService : Service() {
         }
         
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("사용 패턴 분석")
-            .setContentText("휴대폰 사용 패턴을 모니터링 중입니다")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Pace Mate")
+            .setContentText("Tracking screen time & scroll activity")
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
         

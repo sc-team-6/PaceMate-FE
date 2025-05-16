@@ -17,11 +17,21 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.core.graphics.toColorInt
 import android.animation.ValueAnimator
+import android.app.usage.UsageEvents
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
 import android.view.animation.DecelerateInterpolator
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
+import com.gdg.scrollmanager.models.AppUsageInfo
 import com.gdg.scrollmanager.utils.DataStoreUtils
+import com.gdg.scrollmanager.utils.UsageStatsUtils
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -30,7 +40,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     // 설문으로부터 계산된 임계값(Alert Level)
-    private var alertThresholdValue: Int = 80
+    private var alertThresholdValue: Int = 60
     
     // 현재 Overrun Score (중독 확률)
     private var currentScoreValue: Int = 0
@@ -49,10 +59,18 @@ class HomeFragment : Fragment() {
     // ArcProgressView 참조 저장
     private var arcProgressView: ArcProgressView? = null
     
+    // 앱 사용 데이터 저장
+    private var appUsageList: List<AppUsageInfo> = emptyList()
+    
+    // 아이콘 캐시
+    private val appIconCache = mutableMapOf<String, Drawable>()
+    
     // 영속성 저장을 위한 컴파닌 클래스
     companion object {
         private const val PREF_MAX_SCORE = "max_score"
         private const val PREF_MIN_SCORE = "min_score"
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
 
     override fun onCreateView(
@@ -62,6 +80,8 @@ class HomeFragment : Fragment() {
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root as ConstraintLayout
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -77,6 +97,8 @@ class HomeFragment : Fragment() {
         
         // 5초마다 데이터 갱신 시작
         startDataUpdates()
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
     
     /**
@@ -90,6 +112,8 @@ class HomeFragment : Fragment() {
         alertThresholdValue = prefManager.getAlertThreshold()
         
         Log.d("HomeFragment", "Loaded alert threshold: $alertThresholdValue%")
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
     
     /**
@@ -121,18 +145,32 @@ class HomeFragment : Fragment() {
                     // UI가 이미 초기화되었고 Fragment가 여전히 활성 상태인지 확인
                     if (_binding != null && isAdded && view != null) {
                         updateUIWithNewScore(oldValue, probability)
-                    }
-                } else {
+                        // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    } else {
                     // 값이 변경되지 않았더라도 MIN/MAX 표시는 업데이트
                     updateMinMaxDisplay()
-                }
-            } catch (e: Exception) {
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    } catch (e: Exception) {
                 Log.e("HomeFragment", "Error loading addiction probability: ${e.message}")
                 
                 // 문제가 있을 경우 0으로 설정
                 currentScoreValue = 0
-            }
-        }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
     
     /**
@@ -153,10 +191,16 @@ class HomeFragment : Fragment() {
                 animateTextValue(binding.tvMin, currentMinValue, newMinScore, "%")
                 minScore = newMinScore
                 Log.d("HomeFragment", "Updated minScore display: $minScore")
-            } catch (e: Exception) {
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    } catch (e: Exception) {
                 binding.tvMin.text = "$newMinScore%"
-            }
-        }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
         
         if (newMaxScore != maxScore) {
             try {
@@ -165,10 +209,18 @@ class HomeFragment : Fragment() {
                 animateTextValue(binding.tvMax, currentMaxValue, newMaxScore, "%")
                 maxScore = newMaxScore
                 Log.d("HomeFragment", "Updated maxScore display: $maxScore")
-            } catch (e: Exception) {
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    } catch (e: Exception) {
                 binding.tvMax.text = "$newMaxScore%"
-            }
-        }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
     
     /**
@@ -182,7 +234,9 @@ class HomeFragment : Fragment() {
             newValue <= 33 -> "Cruising Mode" to "#76F376" // 초록
             newValue <= 66 -> "Warming Up" to "#FFDE58"    // 노랑
             else -> "Overrun Point" to "#C42727"           // 빨강
-        }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
 
         // 현재 Overrun Score 텍스트 업데이트 (애니메이션)
         animateTextValue(binding.tvPercentage, oldValue, newValue, "%")
@@ -193,7 +247,9 @@ class HomeFragment : Fragment() {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = 100f
             setColor(Color.parseColor(colorHex))
-        }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
         binding.tvStatus.background = statusBg
 
         binding.yellowBackground.setBackgroundColor(Color.parseColor(colorHex))
@@ -225,15 +281,25 @@ class HomeFragment : Fragment() {
                         // 애니메이션 도중에 binding이 null이 되었으면 애니메이션 취소
                         cancel()
                         return@addUpdateListener
-                    }
+                        // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
                     arcView.percentage = (it.animatedValue as Float)
-                }
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
                 start()
-            }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
             
             // 색상 업데이트
             arcView.setFixedColor(colorHex)
-        }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
     
     /**
@@ -251,17 +317,27 @@ class HomeFragment : Fragment() {
                     // 애니메이션 도중에 binding이 null이 되었으면 애니메이션 취소
                     cancel()
                     return@addUpdateListener
-                }
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
                 
                 val value = animation.animatedValue as Int
                 when (textView) {
                     binding.tvPercentage -> binding.tvPercentage.text = "$value$suffix"
                     binding.tvMin -> binding.tvMin.text = "$value$suffix"
                     binding.tvMax -> binding.tvMax.text = "$value$suffix"
-                }
-            }
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
             start()
-        }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
     
     /**
@@ -291,14 +367,22 @@ class HomeFragment : Fragment() {
                 if (currentMinValue != newMinScore) {
                     Log.d("HomeFragment", "Animating minScore from $currentMinValue to $newMinScore")
                     animateTextValue(binding.tvMin, currentMinValue, newMinScore, "%")
-                }
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
                 
                 minScore = newMinScore
-            } catch (e: Exception) {
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    } catch (e: Exception) {
                 Log.e("HomeFragment", "Error updating min score: ${e.message}")
                 binding.tvMin.text = "$newMinScore%"
-            }
-        }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
         
         if (maxChanged || newMaxScore != maxScore) {
             try {
@@ -308,14 +392,24 @@ class HomeFragment : Fragment() {
                 if (currentMaxValue != newMaxScore) {
                     Log.d("HomeFragment", "Animating maxScore from $currentMaxValue to $newMaxScore")
                     animateTextValue(binding.tvMax, currentMaxValue, newMaxScore, "%")
-                }
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
                 
                 maxScore = newMaxScore
-            } catch (e: Exception) {
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    } catch (e: Exception) {
                 Log.e("HomeFragment", "Error updating max score: ${e.message}")
                 binding.tvMax.text = "$newMaxScore%"
-            }
-        }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
     
     /**
@@ -335,22 +429,38 @@ class HomeFragment : Fragment() {
                     // 다음 업데이트 예약 (5초 후)
                     if (isAdded && view != null && _binding != null) { // 추가 안전장치
                         handler.postDelayed(updateRunnable!!, 5000)
-                    } else {
+                        // 앱 사용 데이터 로드
+        loadAppUsageData()
+    } else {
                         stopDataUpdates()
-                    }
-                } catch (e: Exception) {
+                        // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    } catch (e: Exception) {
                     Log.e("HomeFragment", "Error during update: ${e.message}")
                     stopDataUpdates() // 오류 발생 시 업데이트 중지
-                }
-            } else {
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    } else {
                 // Fragment가 화면에서 사라졌을 경우 갱신 중지
                 Log.d("HomeFragment", "Fragment no longer visible, stopping updates")
                 stopDataUpdates()
-            }
-        }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
         
         // 첫 번째 업데이트 예약
         handler.postDelayed(updateRunnable!!, 5000)
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
     
     /**
@@ -360,7 +470,11 @@ class HomeFragment : Fragment() {
         updateRunnable?.let {
             handler.removeCallbacks(it)
             updateRunnable = null
-        }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
 
     private fun setupUI() {
@@ -372,7 +486,9 @@ class HomeFragment : Fragment() {
             currentScoreValue <= 33 -> "Cruising Mode" to "#76F376" // 초록
             currentScoreValue <= 66 -> "Warming Up" to "#FFDE58"    // 노랑
             else -> "Overrun Point" to "#C42727"                   // 빨강
-        }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
 
         // 현재 Overrun Score 표시
         binding.tvPercentage.text = "$currentScoreValue%"
@@ -402,7 +518,9 @@ class HomeFragment : Fragment() {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = 100f
             setColor(Color.parseColor(colorHex))
-        }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
         binding.tvStatus.background = statusBg
 
         binding.yellowBackground.setBackgroundColor(Color.parseColor(colorHex))
@@ -444,7 +562,9 @@ class HomeFragment : Fragment() {
             // 기존 ArcProgressView가 있다면 제거
             if (arcProgressView != null) {
                 overlayContainer.removeView(arcProgressView)
-            }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
 
             // 새 ArcProgressView 생성
             arcProgressView = ArcProgressView(requireContext()).apply {
@@ -455,7 +575,9 @@ class HomeFragment : Fragment() {
 
                 // 색상 설정
                 setFixedColor(colorHex)
-            }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
 
             overlayContainer.addView(arcProgressView)
 
@@ -465,12 +587,20 @@ class HomeFragment : Fragment() {
                 interpolator = DecelerateInterpolator()
                 addUpdateListener {
                     arcProgressView?.percentage = (it.animatedValue as Float)
-                }
+                    // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
                 start()
-            }
+                // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
 
             Log.d("Debug", "Arc center = ($centerX, $centerY), radius = $radius")
-        }
+            // 앱 사용 데이터 로드
+        loadAppUsageData()
+    }
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
 
     override fun onResume() {
@@ -481,6 +611,8 @@ class HomeFragment : Fragment() {
         
         // 데이터 갱신 다시 시작
         startDataUpdates()
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
 
     override fun onDestroyView() {
@@ -494,11 +626,15 @@ class HomeFragment : Fragment() {
         _binding = null
         
         super.onDestroyView()
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
     
     override fun onPause() {
         super.onPause()
         // 화면이 보이지 않을 때 데이터 갱신 중지
         stopDataUpdates()
+        // 앱 사용 데이터 로드
+        loadAppUsageData()
     }
 }
