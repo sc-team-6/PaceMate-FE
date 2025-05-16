@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Pace Mate</string>
     <string name="tab_usage">사용시간</string>
     <string name="tab_screen">화면 상태</string>
     <string name="tab_location">위치</string>
