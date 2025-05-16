@@ -56,8 +56,44 @@ class UsageReportFragment : Fragment() {
         setupRecyclerView()
         setupNumberSummary() // 파이차트 대신 숫자 요약 화면 설정
         setupRefreshButton()
+        setupDataObservers() // Flow 관찰자 설정
         initPhoneUsagePredictor() // ONNX 모델 초기화
         checkPermissionAndLoadData()
+    }
+    
+    private fun setupDataObservers() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            // 데이터 수집 진행 상황 관찰
+            DataStoreUtils.getDataCollectionProgressFlow(requireContext()).collect { progress ->
+                withContext(Dispatchers.Main) {
+                    // 데이터 수집 진행 상황 표시
+                    val progressText = if (progress < 100) {
+                        "데이터 수집 중: $progress%"
+                    } else {
+                        "데이터 분석 완료"
+                    }
+                    binding.tvDataProgress.text = progressText
+                    binding.tvDataProgress.visibility = View.VISIBLE
+                    
+                    // 항상 중독 상태 표시 (부분 데이터로도 예측 결과 보여줌)
+                    binding.tvAddictionStatus.visibility = View.VISIBLE
+                    binding.tvAddictionProbability.visibility = View.VISIBLE
+                    
+                    // 진행도에 상관없이 항상 예측 결과 표시 (제한 없음)
+                    // 예측 결과는 setupDataObservers에서 처리
+                    
+                }
+            }
+        }
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            // 예측 결과 관찰
+            DataStoreUtils.getPredictionResultFlow(requireContext()).collect { predictionPair ->
+                withContext(Dispatchers.Main) {
+                    updateAddictionUI(predictionPair)
+                }
+            }
+        }
     }
     
     private fun initPhoneUsagePredictor() {
@@ -172,6 +208,9 @@ class UsageReportFragment : Fragment() {
         usageReport?.let { report ->
             // 날짜/시간 업데이트
             binding.tvDateTime.text = report.dateTime
+            
+            // 데이터 수집 진행 상황 표시
+            binding.tvDataProgress.visibility = View.VISIBLE
             
             // 사용 시간 업데이트
             binding.tvUsageTime15.text = "${report.usageTime15Min}분"
@@ -471,20 +510,31 @@ class UsageReportFragment : Fragment() {
             
             // UI 업데이트는 메인 스레드에서 실행
             withContext(Dispatchers.Main) {
-                updateAddictionUI(result)
+                // ONNX 모델의 Pair<FloatArray, Int>를 DataStore가 저장하는 형식인 Pair<Int, Float>로 변환
+                val prediction = result.second
+                val probability = result.first[1] * 100f // 확률 백분율로 변환
+                updateAddictionUI(Pair(prediction, probability))
             }
         }
     }
     
     /**
      * 중독 분석 결과 UI 업데이트
+     * @param result Pair(예측결과, 확률) - 첫 번째는 분류 결과 (0: 정상, 1: 중독), 두 번째는 중독 확률(0-100%)
      */
-    private fun updateAddictionUI(result: Pair<FloatArray, Int>) {
-        val probabilities = result.first
-        val prediction = result.second
-        
-        // 중독 확률 계산 (0-100%)
-        val addictionProb = (probabilities[1] * 100).toInt()
+    private fun updateAddictionUI(result: Pair<Int, Float>) {
+        // 데이터 수집 진행 상황 확인
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+            val progress = DataStoreUtils.getDataCollectionProgress(requireContext())
+            
+            // 모든 데이터 진행도에서 예측 표시 (제한 없음)
+            updateAddictionUIWithProgress(result, progress)
+        }
+    }
+    
+    private fun updateAddictionUIWithProgress(result: Pair<Int, Float>, dataProgress: Int) {
+        val prediction = result.first
+        val probability = result.second.toInt()
         
         // 중독 상태 표시
         when (prediction) {
@@ -499,18 +549,26 @@ class UsageReportFragment : Fragment() {
         }
         
         // 확률 표시
-        binding.tvAddictionProbability.text = "(${addictionProb}%)"
+        binding.tvAddictionProbability.text = "(${probability}%)"
         
-        // 조언 표시
+        // 조언 표시 (데이터 진행도에 따라 신뢰도 정보 추가)
         val advice = when {
-            addictionProb >= 80 -> "심각한 중독 수준입니다. 스마트폰 사용을 제한하고 전문가의 도움을 받아보세요."
-            addictionProb >= 60 -> "중독 위험이 높습니다. 사용 시간을 줄이고 정기적인 휴식이 필요합니다."
-            addictionProb >= 40 -> "주의가 필요한 단계입니다. 사용 패턴을 모니터링하고 SNS 앱 사용을 줄여보세요."
-            addictionProb >= 20 -> "약간의 주의가 필요합니다. 취침 전 스마트폰 사용을 자제하세요."
+            probability >= 80 -> "심각한 중독 수준입니다. 스마트폰 사용을 제한하고 전문가의 도움을 받아보세요."
+            probability >= 60 -> "중독 위험이 높습니다. 사용 시간을 줄이고 정기적인 휴식이 필요합니다."
+            probability >= 40 -> "주의가 필요한 단계입니다. 사용 패턴을 모니터링하고 SNS 앱 사용을 줄여보세요."
+            probability >= 20 -> "약간의 주의가 필요합니다. 취침 전 스마트폰 사용을 자제하세요."
             else -> "건강한 사용 패턴입니다. 현재 수준을 유지하세요."
         }
         
-        binding.tvAddictionAdvice.text = advice
+        // 데이터 수집 정도에 따른 신뢰도 정보 추가 (지표용, 모든 데이터 진행도에서 결과 표시)
+        val reliabilityInfo = when {
+            dataProgress < 10 -> "\n\n(신뢰도: 매우 낮음 - 데이터 수집 초기 단계)"
+            dataProgress < 50 -> "\n\n(신뢰도: 낮음 - 데이터 수집 진행 중)"
+            dataProgress < 90 -> "\n\n(신뢰도: 중간 - 현재 데이터를 기반으로 한 분석입니다)"
+            else -> "\n\n(신뢰도: 높음 - 충분한 데이터 기반 분석)"  // 90% 이상일 때도 신뢰도 표시
+        }
+        
+        binding.tvAddictionAdvice.text = advice + reliabilityInfo
     }
 
     override fun onResume() {

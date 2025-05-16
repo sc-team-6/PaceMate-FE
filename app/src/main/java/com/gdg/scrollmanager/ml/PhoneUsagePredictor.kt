@@ -5,6 +5,7 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.content.Context
 import android.util.Log
+import com.gdg.scrollmanager.models.ModelInput
 import java.nio.FloatBuffer
 import java.util.*
 
@@ -81,75 +82,111 @@ class PhoneUsagePredictor(private val context: Context) {
         topAppCategory: String
     ): Pair<FloatArray, Int> {
         
+        // 기존 입력 형식을 새 모델 입력 형식으로 변환
+        val sinHour = kotlin.math.sin(2 * kotlin.math.PI * hour / 24).toFloat()
+        var cosHour = kotlin.math.cos(2 * kotlin.math.PI * hour / 24).toFloat()
+        
+        // 부동소수점 오차 처리 (매우 작은 값은 0으로 처리)
+        if (kotlin.math.abs(cosHour) < 1e-10) {
+            cosHour = 0f
+        }
+        
+        // 현재 분 구하기
+        val calendar = java.util.Calendar.getInstance()
+        val minute = calendar.get(java.util.Calendar.MINUTE)
+        
+        val sinMinute = kotlin.math.sin(2 * kotlin.math.PI * minute / 60).toFloat()
+        var cosMinute = kotlin.math.cos(2 * kotlin.math.PI * minute / 60).toFloat()
+        
+        // 부동소수점 오차 처리 (매우 작은 값은 0으로 처리)
+        if (kotlin.math.abs(cosMinute) < 1e-10) {
+            cosMinute = 0f
+        }
+        
+        val modelInput = ModelInput(
+            screenSeconds = recent15minUsage * 60, // 분을 초로 변환
+            scrollPx = scrollLength,
+            unlocks = unlocks15min,
+            appsUsed = appSwitches15min,
+            screenLast15m = recent15minUsage * 60,
+            screenLast30m = recent30minUsage * 60,
+            screenLast1h = recent60minUsage * 60,
+            unlocksPerMin = unlockRate,
+            unlocksLast15m = unlocks15min,
+            scrollRate = scrollRate,
+            sinHour = sinHour,
+            cosHour = cosHour,
+            sinMinute = sinMinute,
+            cosMinute = cosMinute,
+            appEmbedding = List(32) { 0f } // 앱 임베딩은 임시로 0으로 설정
+        )
+        
+        return predictFromModelInput(modelInput)
+    }
+
+    /**
+     * ModelInput 객체를 사용하여 ONNX 모델 예측 실행 
+     * @return Pair<FloatArray, Int> - 첫 번째 항목은 확률, 두 번째는 분류 결과 (0: 정상, 1: 중독)
+     */
+    fun predictFromModelInput(input: ModelInput): Pair<FloatArray, Int> {
         // ONNX 모델이 로드되지 않은 경우 휴리스틱 모델 사용
         if (session == null) {
             Log.d(TAG, "ONNX 모델 없음, 휴리스틱 모델 사용")
-            return predictWithHeuristic(
-                recent15minUsage, recent30minUsage, recent60minUsage, 
-                unlocks15min, appSwitches15min, snsAppUsage, 
-                avgSessionLength, hour, dayOfWeek, scrollLength, 
-                unlockRate, switchRate, scrollRate, topAppCategory
-            )
+            return predictWithHeuristicFromModelInput(input)
         }
         
         // 입력 맵 생성
         val inputMap = HashMap<String, OnnxTensor>()
         
         try {
-            // 카테고리 값 인코딩 - 정수로 변환
-            val categoryValue = appCategoryMapping[topAppCategory] ?: 3 // 기본값은 Utility
-            
             // 입력 이름과 데이터 확인을 위한 로깅
             Log.d(TAG, "모델 입력 데이터:")
-            Log.d(TAG, "recent_15min_usage: $recent15minUsage")
-            Log.d(TAG, "recent_30min_usage: $recent30minUsage")
-            Log.d(TAG, "recent_60min_usage: $recent60minUsage")
-            Log.d(TAG, "unlocks_15min: $unlocks15min")
-            Log.d(TAG, "app_switches_15min: $appSwitches15min")
-            Log.d(TAG, "sns_app_usage: $snsAppUsage")
-            Log.d(TAG, "avg_session_length: $avgSessionLength")
-            Log.d(TAG, "hour: $hour")
-            Log.d(TAG, "dayofweek: $dayOfWeek")
-            Log.d(TAG, "scroll_length: $scrollLength")
-            Log.d(TAG, "unlock_rate: $unlockRate")
-            Log.d(TAG, "switch_rate: $switchRate")
-            Log.d(TAG, "scroll_rate: $scrollRate")
-            Log.d(TAG, "top_app_category: $topAppCategory -> $categoryValue")
+            Log.d(TAG, "ScreenSeconds: ${input.screenSeconds}")
+            Log.d(TAG, "ScrollPx: ${input.scrollPx}")
+            Log.d(TAG, "Unlocks: ${input.unlocks}")
+            Log.d(TAG, "AppsUsed: ${input.appsUsed}")
+            Log.d(TAG, "screen_last_15m: ${input.screenLast15m}")
+            Log.d(TAG, "screen_last_30m: ${input.screenLast30m}")
+            Log.d(TAG, "screen_last_1h: ${input.screenLast1h}")
+            Log.d(TAG, "unlocks_per_min: ${input.unlocksPerMin}")
+            Log.d(TAG, "unlocks_last_15m: ${input.unlocksLast15m}")
+            Log.d(TAG, "scroll_rate: ${input.scrollRate}")
+            Log.d(TAG, "sin_hour: ${input.sinHour}")
+            Log.d(TAG, "cos_hour: ${input.cosHour}")
+            Log.d(TAG, "sin_minute: ${input.sinMinute}")
+            Log.d(TAG, "cos_minute: ${input.cosMinute}")
             
             // 모델 입력 정보 확인
             val inputInfo = session?.inputInfo
             if (inputInfo == null || inputInfo.isEmpty()) {
                 Log.e(TAG, "모델 입력 정보가 없음")
-                return predictWithHeuristic(
-                    recent15minUsage, recent30minUsage, recent60minUsage, 
-                    unlocks15min, appSwitches15min, snsAppUsage, 
-                    avgSessionLength, hour, dayOfWeek, scrollLength, 
-                    unlockRate, switchRate, scrollRate, topAppCategory
-                )
+                return predictWithHeuristicFromModelInput(input)
             }
             
-            // 입력 이름 매핑 (모델에 따라 조정 필요)
+            // 새로운 모델 형식에 맞게 입력 준비
             val numericInputs = mapOf(
-                "recent_15min_usage" to recent15minUsage.toFloat(),
-                "recent_30min_usage" to recent30minUsage.toFloat(),
-                "recent_60min_usage" to recent60minUsage.toFloat(),
-                "unlocks_15min" to unlocks15min.toFloat(),
-                "app_switches_15min" to appSwitches15min.toFloat(),
-                "sns_app_usage" to snsAppUsage.toFloat(),
-                "avg_session_length" to avgSessionLength,
-                "hour" to hour.toFloat(),
-                "day_of_week" to dayOfWeek.toFloat(),
-                "scroll_length" to scrollLength.toFloat(),
-                "unlock_rate" to unlockRate,
-                "switch_rate" to switchRate,
-                "scroll_rate" to scrollRate
+                "ScreenSeconds" to input.screenSeconds.toFloat(),
+                "ScrollPx" to input.scrollPx.toFloat(),
+                "Unlocks" to input.unlocks.toFloat(),
+                "AppsUsed" to input.appsUsed.toFloat(),
+                "screen_last_15m" to input.screenLast15m.toFloat(),
+                "screen_last_30m" to input.screenLast30m.toFloat(),
+                "screen_last_1h" to input.screenLast1h.toFloat(),
+                "unlocks_per_min" to input.unlocksPerMin,
+                "unlocks_last_15m" to input.unlocksLast15m.toFloat(),
+                "scroll_rate" to input.scrollRate,
+                "sin_hour" to input.sinHour,
+                "cos_hour" to input.cosHour,
+                "sin_minute" to input.sinMinute,
+                "cos_minute" to input.cosMinute
             )
             
-            val stringInputs = mapOf(
-                "top_app_category" to topAppCategory
-            )
+            // 앱 임베딩 준비
+            for (i in 0 until input.appEmbedding.size) {
+                numericInputs.plus("app_emb_$i" to input.appEmbedding[i])
+            }
             
-            // 모델의 입력에 맞게 텐서 생성
+            // ONNX 텐서 생성
             for ((name, info) in inputInfo) {
                 // 입력 이름이 숫자 매핑에 있는지 확인
                 val numValue = numericInputs[name]
@@ -165,17 +202,6 @@ class PhoneUsagePredictor(private val context: Context) {
                     continue
                 }
                 
-                // 입력 이름이 문자열 매핑에 있는지 확인
-                val strValue = stringInputs[name]
-                if (strValue != null) {
-                    // 문자열 텐서 생성
-                    val strArray = Array(1) { Array(1) { strValue } } // 2차원 문자열 배열 [1, 1]
-                    val tensor = OnnxTensor.createTensor(ortEnvironment, strArray)
-                    inputMap[name] = tensor
-                    Log.d(TAG, "문자열 입력 텐서 생성: $name = $strValue")
-                    continue
-                }
-                
                 Log.w(TAG, "모델이 요구하는 입력 이름이 매핑에 없음: $name")
             }
             
@@ -186,12 +212,7 @@ class PhoneUsagePredictor(private val context: Context) {
             // 모델이 로드되지 않았거나 추론에 실패한 경우 기본값 반환
             if (results == null) {
                 Log.e(TAG, "추론 결과가 null, 휴리스틱 모델 사용")
-                return predictWithHeuristic(
-                    recent15minUsage, recent30minUsage, recent60minUsage, 
-                    unlocks15min, appSwitches15min, snsAppUsage, 
-                    avgSessionLength, hour, dayOfWeek, scrollLength, 
-                    unlockRate, switchRate, scrollRate, topAppCategory
-                )
+                return predictWithHeuristicFromModelInput(input)
             }
             
             try {
@@ -203,13 +224,12 @@ class PhoneUsagePredictor(private val context: Context) {
                     Log.d(TAG, "결과[$i] 값 타입: ${results.get(i)?.value?.javaClass}")
                 }
                 
-                // 출력 처리 - 출력 형식에 맞게 수정
-                // 로그를 통해 확인한 결과: 
-                // [0] - Long 배열(prediction)
-                // [1] - 2차원 Float 배열(probabilities)
+                // 출력 처리 (예시 - 실제 모델 출력에 맞게 조정 필요)
+                // 1. 분류 결과 (예측 클래스)
+                val predictionOutput = if (results.size() > 0) results.get(0)?.value as? LongArray else null
                 
-                val predictionOutput = results.get(0)?.value as? LongArray
-                val probabilitiesOutput = results.get(1)?.value as? Array<FloatArray>
+                // 2. 확률 (각 클래스에 대한 확률값)
+                val probabilitiesOutput = if (results.size() > 1) results.get(1)?.value as? Array<FloatArray> else null
                 
                 // null 체크 후 안전하게 처리
                 if (predictionOutput != null && probabilitiesOutput != null && probabilitiesOutput.isNotEmpty()) {
@@ -220,22 +240,12 @@ class PhoneUsagePredictor(private val context: Context) {
                     return Pair(probabilities, prediction)
                 } else {
                     Log.e(TAG, "출력 결과 타입 변환 실패, 휴리스틱 모델 사용")
-                    return predictWithHeuristic(
-                        recent15minUsage, recent30minUsage, recent60minUsage, 
-                        unlocks15min, appSwitches15min, snsAppUsage, 
-                        avgSessionLength, hour, dayOfWeek, scrollLength, 
-                        unlockRate, switchRate, scrollRate, topAppCategory
-                    )
+                    return predictWithHeuristicFromModelInput(input)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "출력 처리 예외 발생: ${e.message}")
                 e.printStackTrace()
-                return predictWithHeuristic(
-                    recent15minUsage, recent30minUsage, recent60minUsage, 
-                    unlocks15min, appSwitches15min, snsAppUsage, 
-                    avgSessionLength, hour, dayOfWeek, scrollLength, 
-                    unlockRate, switchRate, scrollRate, topAppCategory
-                )
+                return predictWithHeuristicFromModelInput(input)
             } finally {
                 // 리소스 정리 - 모든 텐서 닫기
                 for (tensor in inputMap.values) {
@@ -249,71 +259,46 @@ class PhoneUsagePredictor(private val context: Context) {
         } catch (e: Exception) {
             Log.e(TAG, "입력 생성 예외 발생: ${e.message}")
             e.printStackTrace()
-            return predictWithHeuristic(
-                recent15minUsage, recent30minUsage, recent60minUsage, 
-                unlocks15min, appSwitches15min, snsAppUsage, 
-                avgSessionLength, hour, dayOfWeek, scrollLength, 
-                unlockRate, switchRate, scrollRate, topAppCategory
-            )
+            return predictWithHeuristicFromModelInput(input)
         }
     }
     
     /**
-     * ONNX 모델 사용 실패 시 대체 예측 방법
+     * ModelInput 객체를 사용한 휴리스틱 예측 방법
      */
-    private fun predictWithHeuristic(
-        recent15minUsage: Int,
-        recent30minUsage: Int,
-        recent60minUsage: Int,
-        unlocks15min: Int,
-        appSwitches15min: Int,
-        snsAppUsage: Int,
-        avgSessionLength: Float,
-        hour: Int,
-        dayOfWeek: Int,
-        scrollLength: Int,
-        unlockRate: Float,
-        switchRate: Float,
-        scrollRate: Float,
-        topAppCategory: String
-    ): Pair<FloatArray, Int> {
+    private fun predictWithHeuristicFromModelInput(input: ModelInput): Pair<FloatArray, Int> {
         // 간단한 휴리스틱 모델 구현
         var score = 0.0f
         
         // 사용 시간 요소
-        score += recent15minUsage * 0.1f
-        score += recent30minUsage * 0.05f
-        score += recent60minUsage * 0.025f
+        score += input.screenSeconds * 0.02f
+        score += input.screenLast15m * 0.005f
+        score += input.screenLast30m * 0.003f
+        score += input.screenLast1h * 0.001f
         
         // 휴대폰 상호작용 요소
-        score += unlocks15min * 0.2f
-        score += appSwitches15min * 0.1f
-        score += snsAppUsage * 0.3f
+        score += input.unlocks * 0.2f
+        score += input.unlocksLast15m * 0.1f
+        score += input.appsUsed * 0.1f
         
-        // 시간 요소
-        score += avgSessionLength * 0.01f // 세션 길이는 초 단위이므로 낮은 가중치 부여
+        // 스크롤 요소
+        score += input.scrollPx / 1000f 
+        score += input.scrollRate * 0.5f
         
-        // 시간대를 고려 (야간 사용을 더 높게 가중치)
-        if (hour >= 22 || hour <= 5) {
-            score *= 1.5f
+        // 시간 요소 (밤 시간에 사용하면 점수 가중)
+        // 코사인 값에서 시간 계산 시 부동소수점 오차 처리
+        var cosHourForCalc = input.cosHour
+        if (kotlin.math.abs(cosHourForCalc) < 1e-10) {
+            cosHourForCalc = 0f
         }
         
-        // 스크롤 및 잠금 해제 요소
-        score += scrollLength / 1000f // 스크롤 길이는 큰 값이므로 낮은 가중치
-        score += unlockRate * 2f
-        score += switchRate * 1.5f
-        score += scrollRate * 10f
-        
-        // 앱 카테고리 요소
-        when (topAppCategory) {
-            "Social" -> score *= 1.5f
-            "Game", "Games" -> score *= 1.4f
-            "Entertainment" -> score *= 1.3f
-            else -> score *= 0.9f
+        val hour = kotlin.math.acos(cosHourForCalc) * 12 / kotlin.math.PI
+        if (hour >= 22 || hour <= 5) {
+            score *= 1.3f
         }
         
         // 점수를 확률로 정규화
-        val normalizedScore = minOf(1.0f, maxOf(0.0f, score / 15f))
+        val normalizedScore = minOf(1.0f, maxOf(0.0f, score / 10f))
         
         // 확률 배열 생성
         val probabilities = floatArrayOf(1.0f - normalizedScore, normalizedScore)

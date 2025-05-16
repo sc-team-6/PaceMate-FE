@@ -1,6 +1,5 @@
 package com.gdg.scrollmanager.services
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -15,8 +14,11 @@ import androidx.core.app.NotificationCompat
 import androidx.datastore.preferences.core.edit
 import com.gdg.scrollmanager.R
 import com.gdg.scrollmanager.ml.PhoneUsagePredictor
+import com.gdg.scrollmanager.models.ModelInput
+import com.gdg.scrollmanager.models.UsageDataPoint
 import com.gdg.scrollmanager.models.UsageReport
 import com.gdg.scrollmanager.utils.DataStoreUtils
+import com.gdg.scrollmanager.utils.UsageDataAggregator
 import com.gdg.scrollmanager.utils.UsageStatsUtils
 import com.gdg.scrollmanager.utils.usageDataStore
 import com.google.gson.Gson
@@ -38,6 +40,9 @@ class UsageDataCollectorService : Service() {
     // 데이터 수집 주기 (5초)
     private val COLLECTION_INTERVAL = 5000L
     
+    // 모델 예측 주기 (15초)
+    private val PREDICTION_INTERVAL = 15000L
+    
     // ONNX 예측 모델
     private lateinit var phoneUsagePredictor: PhoneUsagePredictor
     
@@ -49,12 +54,34 @@ class UsageDataCollectorService : Service() {
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
     
-    // 핸들러 - 주기적인 작업 실행용
-    private val handler = Handler(Looper.getMainLooper())
+    // 현재 관찰 중인 앱 패키지 목록
+    private val currentAppPackages = mutableSetOf<String>()
+    
+    // 이전 데이터 포인트 수집 시간
+    private var lastDataCollectionTime = 0L
+    
+    // 이전 화면 상태 (켜짐/꺼짐)
+    private var isScreenOn = false
+    private var screenOnStartTime = 0L
+    
+    // 이전 예측 시간
+    private var lastPredictionTime = 0L
+    
+    // 핸들러 - 데이터 수집용
+    private val dataCollectionHandler = Handler(Looper.getMainLooper())
     private val dataCollectionRunnable = object : Runnable {
         override fun run() {
-            collectDataPeriodically()
-            handler.postDelayed(this, COLLECTION_INTERVAL)
+            collectDataPoint()
+            dataCollectionHandler.postDelayed(this, COLLECTION_INTERVAL)
+        }
+    }
+    
+    // 핸들러 - 모델 예측용
+    private val predictionHandler = Handler(Looper.getMainLooper())
+    private val predictionRunnable = object : Runnable {
+        override fun run() {
+            runPrediction()
+            predictionHandler.postDelayed(this, PREDICTION_INTERVAL)
         }
     }
     
@@ -71,8 +98,8 @@ class UsageDataCollectorService : Service() {
         // 포어그라운드 서비스 시작
         startForeground()
         
-        // 주기적 데이터 수집 시작
-        startPeriodicDataCollection()
+        // 데이터 수집 시작
+        startDataCollection()
     }
     
     private fun initPhoneUsagePredictor() {
@@ -104,129 +131,219 @@ class UsageDataCollectorService : Service() {
         startForeground(NOTIFICATION_ID, notification)
     }
     
-    private fun startPeriodicDataCollection() {
-        handler.post(dataCollectionRunnable)
+    private fun startDataCollection() {
+        // 초기 타임스탬프 설정
+        lastDataCollectionTime = System.currentTimeMillis()
+        
+        // 데이터 수집 시작
+        dataCollectionHandler.post(dataCollectionRunnable)
+        
+        // 모델 예측 시작
+        predictionHandler.post(predictionRunnable)
     }
     
-    private fun collectDataPeriodically() {
+    /**
+     * 5초마다 데이터 포인트를 수집합니다.
+     */
+    private fun collectDataPoint() {
         serviceScope.launch {
             try {
-                collectAndStoreUsageData()
+                val now = System.currentTimeMillis()
+                val elapsedMillis = now - lastDataCollectionTime
+                
+                // 5초 동안의 데이터 수집
+                val dataPoint = collectUsageData(elapsedMillis)
+                
+                // 수집된 데이터 포인트 추가
+                UsageDataAggregator.addDataPoint(dataPoint)
+                
+                // 다음 수집 타임스탬프 업데이트
+                lastDataCollectionTime = now
+                
+                Log.d(TAG, "데이터 포인트 수집 완료: ${UsageDataAggregator.getDataPointCount()}/60")
             } catch (e: Exception) {
-                Log.e(TAG, "데이터 수집 중 오류 발생: ${e.message}")
+                Log.e(TAG, "데이터 수집 오류: ${e.message}")
                 e.printStackTrace()
             }
         }
     }
     
-    private suspend fun collectAndStoreUsageData() = withContext(Dispatchers.IO) {
-        Log.d(TAG, "데이터 수집 중...")
+    /**
+     * 일정 시간 동안의 사용 데이터를 수집합니다.
+     */
+    private suspend fun collectUsageData(elapsedMillis: Long): UsageDataPoint = withContext(Dispatchers.IO) {
+        // 시간 간격을 초로 변환
+        val intervalSeconds = (elapsedMillis / 1000).toInt()
         
+        // 현재 화면 상태 확인
+        val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+        val isScreenCurrentlyOn = powerManager.isInteractive
+        
+        // 화면 켜짐 시간 계산
+        var screenTimeSeconds = 0
+        if (isScreenCurrentlyOn) {
+            if (!isScreenOn) {
+                // 화면이 방금 켜짐
+                screenOnStartTime = System.currentTimeMillis() - elapsedMillis
+                isScreenOn = true
+                screenTimeSeconds = intervalSeconds
+            } else {
+                // 화면이 계속 켜져 있음
+                screenTimeSeconds = intervalSeconds
+            }
+        } else {
+            if (isScreenOn) {
+                // 화면이 방금 꺼짐
+                val screenOnDuration = System.currentTimeMillis() - screenOnStartTime
+                screenTimeSeconds = (screenOnDuration / 1000).toInt().coerceAtMost(intervalSeconds)
+                isScreenOn = false
+            }
+        }
+        
+        // 스크롤 양 가져오기
+        val scrollPixels = calculateScrollPixels()
+        
+        // 잠금 해제 횟수 가져오기
+        val unlockCount = UsageStatsUtils.getUnlockCount(applicationContext, intervalSeconds / 60 + 1)
+        
+        // 사용한 앱 패키지 가져오기
+        updateCurrentAppPackages()
+        
+        return@withContext UsageDataPoint(
+            timestamp = System.currentTimeMillis(),
+            screenTimeSeconds = screenTimeSeconds,
+            scrollPixels = scrollPixels,
+            unlockCount = unlockCount,
+            appPackages = currentAppPackages.toSet()
+        )
+    }
+    
+    /**
+     * 현재 실행 중인 앱을 확인하고 목록을 업데이트합니다.
+     */
+    private fun updateCurrentAppPackages() {
         try {
-            // 사용 통계 데이터 수집
-            val report = generateUsageReport()
+            val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager
+            val time = System.currentTimeMillis()
             
-            // 예측 실행
-            val predictionResult = runPrediction(report)
+            // 최근 10초 동안의 앱 사용 이벤트 가져오기
+            val events = usageStatsManager.queryEvents(time - 10000, time)
+            val event = android.app.usage.UsageEvents.Event()
             
-            // DataStore에 저장
-            storeUsageDataToDataStore(report, predictionResult)
-            
-            Log.d(TAG, "데이터 수집 완료: 중독 예측 결과=${predictionResult.second}")
+            while (events.hasNextEvent()) {
+                events.getNextEvent(event)
+                
+                if (event.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED) {
+                    // 런처 제외
+                    if (!UsageStatsUtils.isLauncherPackage(event.packageName)) {
+                        currentAppPackages.add(event.packageName)
+                    }
+                }
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "데이터 수집 오류: ${e.message}")
-            e.printStackTrace()
+            Log.e(TAG, "앱 패키지 목록 업데이트 오류: ${e.message}")
         }
     }
     
-    private suspend fun generateUsageReport(): UsageReport {
-        val context = applicationContext
-        val appUsageList = UsageStatsUtils.getAppUsageStats(context)
-        
-        val usageTime15Min = UsageStatsUtils.getTotalUsageTimeInMinutes(context, 15)
-        val usageTime30Min = UsageStatsUtils.getTotalUsageTimeInMinutes(context, 30)
-        val usageTime60Min = UsageStatsUtils.getTotalUsageTimeInMinutes(context, 60)
-        
-        val unlockCount = UsageStatsUtils.getUnlockCount(context, 15)
-        val appSwitchCount = UsageStatsUtils.getAppSwitchCount(context, 15)
-        
-        val mainAppCategory = UsageStatsUtils.getMainAppCategory(context)
-        val socialAppCount = UsageStatsUtils.getSocialMediaAppUsageCount(context, 60)
-        
-        val averageSessionLength = UsageStatsUtils.getAverageSessionDuration(context)
-        val dateTime = UsageStatsUtils.getCurrentDateTime()
-        
-        // 스크롤 거리 가져오기
-        val scrollDistance = DataStoreUtils.getTotalScrollDistance(context)
-        
-        return UsageReport(
-            usageTime15Min = usageTime15Min,
-            usageTime30Min = usageTime30Min,
-            usageTime60Min = usageTime60Min,
-            unlockCount15Min = unlockCount,
-            appSwitchCount15Min = appSwitchCount,
-            mainAppCategory = mainAppCategory,
-            socialAppCount = socialAppCount,
-            averageSessionLength = averageSessionLength,
-            dateTime = dateTime,
-            scrollDistance = scrollDistance,
-            appUsageList = appUsageList
-        )
+    /**
+     * 수집 간격 동안의 스크롤 양을 계산합니다.
+     */
+    private suspend fun calculateScrollPixels(): Int = withContext(Dispatchers.IO) {
+        try {
+            // DataStore에서 스크롤 데이터 가져오기
+            val scrollDistance = DataStoreUtils.getTotalScrollDistance(applicationContext)
+            
+            // 이전 스크롤 거리와 비교하여 증가량 계산
+            val lastScrollDistance = DataStoreUtils.getLastScrollDistance(applicationContext)
+            val scrollPixels = ((scrollDistance - lastScrollDistance) * 100).toInt()
+            
+            // 현재 스크롤 거리 저장
+            DataStoreUtils.saveLastScrollDistance(applicationContext, scrollDistance)
+            
+            return@withContext scrollPixels.coerceAtLeast(0)
+        } catch (e: Exception) {
+            Log.e(TAG, "스크롤 픽셀 계산 오류: ${e.message}")
+            return@withContext 0
+        }
     }
     
-    private fun runPrediction(report: UsageReport): Pair<FloatArray, Int> {
-        // 현재 시간 관련 데이터 가져오기
-        val calendar = Calendar.getInstance()
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) - 1 
-        
-        // 스크롤 관련 데이터 계산
-        val scrollLength = report.scrollDistance.toInt() 
-        
-        // 비율 계산 (변화율)
-        val unlockRate: Float = if (report.usageTime15Min > 0) {
-            report.unlockCount15Min.toFloat() / report.usageTime15Min.toFloat()
-        } else 0f
-        
-        val switchRate: Float = if (report.usageTime15Min > 0) {
-            report.appSwitchCount15Min.toFloat() / report.usageTime15Min.toFloat()
-        } else 0f
-        
-        val scrollRate: Float = if (report.usageTime60Min > 0 && scrollLength > 0) {
-            scrollLength.toFloat() / (report.usageTime60Min.toFloat() * 60f) 
-        } else 0f
-        
-        // ONNX 모델 예측 실행
-        return phoneUsagePredictor.predict(
-            recent15minUsage = report.usageTime15Min,
-            recent30minUsage = report.usageTime30Min,
-            recent60minUsage = report.usageTime60Min,
-            unlocks15min = report.unlockCount15Min,
-            appSwitches15min = report.appSwitchCount15Min,
-            snsAppUsage = report.socialAppCount,
-            avgSessionLength = report.averageSessionLength,
-            hour = hour,
-            dayOfWeek = dayOfWeek,
-            scrollLength = scrollLength,
-            unlockRate = unlockRate,
-            switchRate = switchRate,
-            scrollRate = scrollRate,
-            topAppCategory = report.mainAppCategory
-        )
+    /**
+     * 주기적으로 예측을 실행합니다.
+     */
+    private fun runPrediction() {
+        serviceScope.launch {
+            try {
+                Log.d(TAG, "예측 실행 중...")
+                
+                // 누적된 데이터 집계
+                val modelInput = UsageDataAggregator.aggregateData()
+                
+                // ONNX 모델 예측 실행
+                val result = predictAddiction(modelInput)
+                
+                // 결과 저장
+                storePredictionResult(modelInput, result)
+                
+                // 마지막 예측 시간 업데이트
+                lastPredictionTime = System.currentTimeMillis()
+                
+                Log.d(TAG, "예측 완료: ${result.second}, 확률: ${result.first[1] * 100}%")
+            } catch (e: Exception) {
+                Log.e(TAG, "예측 오류: ${e.message}")
+                e.printStackTrace()
+            }
+        }
     }
     
-    private suspend fun storeUsageDataToDataStore(report: UsageReport, predictionResult: Pair<FloatArray, Int>) {
-        val reportJson = gson.toJson(report)
+    /**
+     * ONNX 모델을 사용하여 중독 여부를 예측합니다.
+     */
+    private fun predictAddiction(modelInput: ModelInput): Pair<FloatArray, Int> {
+        // 모델 입력값 로그
+        Log.d(TAG, "모델 입력: screenSeconds=${modelInput.screenSeconds}, " +
+                "scrollPx=${modelInput.scrollPx}, unlocks=${modelInput.unlocks}, " +
+                "screenLast15m=${modelInput.screenLast15m}, scrollRate=${modelInput.scrollRate}")
+        
+        // ONNX 모델을 사용한 예측
+        return phoneUsagePredictor.predictFromModelInput(modelInput)
+    }
+    
+    /**
+     * 예측 결과를 DataStore에 저장합니다.
+     */
+    private suspend fun storePredictionResult(modelInput: ModelInput, predictionResult: Pair<FloatArray, Int>) {
         val predictionValue = predictionResult.second
         val probability = predictionResult.first[1] * 100 // 중독 확률 (%)
         
+        // UsageReport 생성 (기본 정보만 포함)
+        val report = UsageReport(
+            usageTime15Min = modelInput.screenLast15m / 60,
+            usageTime30Min = modelInput.screenLast30m / 60,
+            usageTime60Min = modelInput.screenLast1h / 60,
+            unlockCount15Min = modelInput.unlocksLast15m,
+            appSwitchCount15Min = 0, // TODO: 실제로 추적 필요
+            mainAppCategory = "Unknown", // TODO: 실제로 계산 필요
+            socialAppCount = 0, // TODO: 실제로 계산 필요
+            averageSessionLength = 0f, // TODO: 실제로 계산 필요
+            dateTime = UsageStatsUtils.getCurrentDateTime(),
+            scrollDistance = modelInput.scrollPx.toFloat(),
+            appUsageList = emptyList() // TODO: 실제로 계산 필요
+        )
+        
+        // DataStore에 저장
         applicationContext.usageDataStore.edit { preferences ->
             // 사용 데이터 저장
-            preferences[DataStoreUtils.LATEST_USAGE_REPORT_KEY] = reportJson
+            preferences[DataStoreUtils.LATEST_USAGE_REPORT_KEY] = gson.toJson(report)
             
             // 예측 결과 저장
             preferences[DataStoreUtils.PREDICTION_RESULT_KEY] = predictionValue
             preferences[DataStoreUtils.PREDICTION_PROBABILITY_KEY] = probability
+            
+            // 모델 입력값 저장
+            preferences[DataStoreUtils.MODEL_INPUT_KEY] = gson.toJson(modelInput)
+            
+            // 데이터 수집 진행 상황 저장
+            preferences[DataStoreUtils.DATA_COLLECTION_PROGRESS_KEY] = UsageDataAggregator.getDataCollectionProgress()
             
             // 타임스탬프 저장
             preferences[DataStoreUtils.LAST_UPDATE_TIMESTAMP_KEY] = System.currentTimeMillis()
@@ -238,7 +355,8 @@ class UsageDataCollectorService : Service() {
         Log.d(TAG, "서비스 종료됨")
         
         // 핸들러 콜백 제거
-        handler.removeCallbacks(dataCollectionRunnable)
+        dataCollectionHandler.removeCallbacks(dataCollectionRunnable)
+        predictionHandler.removeCallbacks(predictionRunnable)
         
         // 코루틴 스코프 취소
         serviceScope.cancel()

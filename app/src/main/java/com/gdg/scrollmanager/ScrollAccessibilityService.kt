@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import com.gdg.scrollmanager.utils.DataStoreUtils
 import com.gdg.scrollmanager.utils.scrollDataStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,10 +22,10 @@ class ScrollAccessibilityService : AccessibilityService() {
 
     private fun addScrollDistanceToDataStore(amount: Float) {
         CoroutineScope(Dispatchers.IO).launch {
-            val key = floatPreferencesKey("external_scroll_distance")
+            // 기존 키 대신 DataStoreUtils에 정의된 키 사용
             applicationContext.scrollDataStore.edit { preferences ->
-                val current = preferences[key] ?: 0f
-                preferences[key] = current + amount
+                val current = preferences[DataStoreUtils.EXTERNAL_SCROLL_KEY] ?: 0f
+                preferences[DataStoreUtils.EXTERNAL_SCROLL_KEY] = current + amount
             }
         }
     }

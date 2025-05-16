@@ -36,8 +36,8 @@ object UsageStatsUtils {
         "com.blackberry.launcher"             // BlackBerry
     )
     
-    // 패키지가 홈 런처인지 확인
-    private fun isLauncherPackage(packageName: String): Boolean {
+    // 패키지가 홈 런처인지 확인 (public으로 변경)
+    fun isLauncherPackage(packageName: String): Boolean {
         return launcherPackages.any { packageName.contains(it) || packageName == it }
     }
     

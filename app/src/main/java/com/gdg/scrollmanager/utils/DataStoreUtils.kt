@@ -1,6 +1,7 @@
 package com.gdg.scrollmanager.utils
 
 import android.content.Context
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -22,11 +23,14 @@ object DataStoreUtils {
     
     // 스크롤 거리 관련 키
     val EXTERNAL_SCROLL_KEY = floatPreferencesKey("external_scroll_distance")
+    val LAST_SCROLL_DISTANCE_KEY = floatPreferencesKey("last_scroll_distance")
     
     // 실시간 사용 데이터 관련 키
     val LATEST_USAGE_REPORT_KEY = stringPreferencesKey("latest_usage_report")
     val PREDICTION_RESULT_KEY = intPreferencesKey("prediction_result")
     val PREDICTION_PROBABILITY_KEY = floatPreferencesKey("prediction_probability")
+    val MODEL_INPUT_KEY = stringPreferencesKey("model_input")
+    val DATA_COLLECTION_PROGRESS_KEY = intPreferencesKey("data_collection_progress")
     val LAST_UPDATE_TIMESTAMP_KEY = longPreferencesKey("last_update_timestamp")
     
     // 스크롤 총 거리 가져오기
@@ -34,6 +38,20 @@ object DataStoreUtils {
         return context.scrollDataStore.data.map { preferences ->
             preferences[EXTERNAL_SCROLL_KEY] ?: 0f
         }.first()
+    }
+    
+    // 마지막 스크롤 거리 가져오기
+    suspend fun getLastScrollDistance(context: Context): Float {
+        return context.scrollDataStore.data.map { preferences ->
+            preferences[LAST_SCROLL_DISTANCE_KEY] ?: 0f
+        }.first()
+    }
+    
+    // 마지막 스크롤 거리 저장하기
+    suspend fun saveLastScrollDistance(context: Context, distance: Float) {
+        context.scrollDataStore.edit { preferences ->
+            preferences[LAST_SCROLL_DISTANCE_KEY] = distance
+        }
     }
     
     // 스크롤 거리 포맷팅
@@ -68,6 +86,27 @@ object DataStoreUtils {
             val probability = preferences[PREDICTION_PROBABILITY_KEY] ?: 0f
             Pair(result, probability)
         }
+    }
+    
+    // 모델 입력 Flow 가져오기
+    fun getModelInputFlow(context: Context): Flow<String?> {
+        return context.usageDataStore.data.map { preferences ->
+            preferences[MODEL_INPUT_KEY]
+        }
+    }
+    
+    // 데이터 수집 진행상황 가져오기 (Flow)
+    fun getDataCollectionProgressFlow(context: Context): Flow<Int> {
+        return context.usageDataStore.data.map { preferences ->
+            preferences[DATA_COLLECTION_PROGRESS_KEY] ?: 0
+        }
+    }
+    
+    // 데이터 수집 진행상황 가져오기 (동기)
+    suspend fun getDataCollectionProgress(context: Context): Int {
+        return context.usageDataStore.data.map { preferences ->
+            preferences[DATA_COLLECTION_PROGRESS_KEY] ?: 0
+        }.first()
     }
     
     // 마지막 업데이트 시간 Flow 가져오기
