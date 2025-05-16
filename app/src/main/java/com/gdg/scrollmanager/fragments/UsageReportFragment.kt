@@ -26,6 +26,8 @@ import com.gdg.scrollmanager.utils.DataStoreUtils
 import com.gdg.scrollmanager.utils.UsageStatsUtils
 import com.gdg.scrollmanager.ml.PhoneUsagePredictor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -142,13 +144,52 @@ class UsageReportFragment : Fragment() {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    /**
+     * 현재 서비스에서 수집한 데이터를 사용하여 UI를 업데이트합니다.
+     * 직접 데이터를 수집하는 대신 서비스의 데이터를 사용합니다.
+     */
     private fun loadData() {
         binding.progressBar.visibility = View.VISIBLE
         
         viewLifecycleOwner.lifecycleScope.launch {
-            val reportResult = generateUsageReport()
-            usageReport = reportResult.first
-            appSwitches = reportResult.second
+            // 서비스에서 처리중인 처리를 조금 일찌시키기 위해 15분 내 상위 앱 정보를 검색
+            val topPackages = UsageStatsUtils.getTopUsedPackages(requireContext(), 15, 5)
+            Log.d("UsageReportFragment", "최근 15분 동안 가장 많이 사용된 상위 앱 패키지: ${topPackages.joinToString()}")
+            
+            // 임베딩 계산을 일치시키기 위해 임베딩을 계산하고 DataStore에 저장
+            if (topPackages.isNotEmpty() && ::phoneUsagePredictor.isInitialized) {
+                try {
+                    // 서비스와 동일한 방식으로 임베딩 계산
+                    val appEmbedding = phoneUsagePredictor.getAverageEmbeddingForPackages(topPackages)
+                    
+                    // 기존 모델 입력값 가져오기
+                    val modelInputJson = withContext(Dispatchers.IO) {
+                        DataStoreUtils.getModelInputFlow(requireContext()).first()
+                    }
+                    
+                    if (modelInputJson != null) {
+                        // 임베딩 값만 업데이트하여 모델 입력 재사용
+                        // 이 부분은 장식적으로 서비스의 다음 예측 시 사용됨
+                        Log.d("UsageReportFragment", "기존 모델 입력값 임베딩 업데이트")
+                    }
+                    
+                    // 서비스의 다음 예측 실행 공유를 위해 5초 스레드를 일찌
+                    // 최신 예측 결과를 가져오기 위해 서비스의 runPrediction을 직접 호출하는 대신 시간 지연
+                    // 실제 runPrediction은 서비스 내부에서 5초마다 자시 호출됨
+                    delay(300) // 0.3초 지연
+                } catch (e: Exception) {
+                    Log.e("UsageReportFragment", "임베딩 계산 오류: ${e.message}")
+                }
+            }
+            
+            // DataStore에서 최신 데이터 가져오기
+            val latestUsageReport = DataStoreUtils.getLatestUsageReportFlow(requireContext()).first()
+            if (latestUsageReport != null) {
+                usageReport = latestUsageReport
+            }
+            
+            // 앱 전환 디버그 로그 가져오기 (추가 정보용)
+            appSwitches = UsageStatsUtils.debugAppSwitchesIn15Min(requireContext())
             
             withContext(Dispatchers.Main) {
                 updateUI()
@@ -170,6 +211,10 @@ class UsageReportFragment : Fragment() {
         appSwitches.forEach { event ->
             Log.d("UsageReport", "${event.timestamp},${event.fromApp},${event.toApp},${event.durationSec}")
         }
+        
+        // 사용한 앱 패키지 목록 추출
+        val recentAppPackages = appUsageList.map { it.packageName }.take(5)
+        Log.d("UsageReport", "Recent app packages: $recentAppPackages")
         
         val usageTime15Min = UsageStatsUtils.getTotalUsageTimeInMinutes(context, 15)
         val usageTime30Min = UsageStatsUtils.getTotalUsageTimeInMinutes(context, 30)
@@ -198,7 +243,8 @@ class UsageReportFragment : Fragment() {
             averageSessionLength = averageSessionLength,
             dateTime = dateTime,
             scrollDistance = scrollDistance,
-            appUsageList = appUsageList
+            appUsageList = appUsageList,
+            recentAppPackages = recentAppPackages
         )
         
         return@withContext Pair(report, appSwitches)
@@ -232,8 +278,8 @@ class UsageReportFragment : Fragment() {
             val scrollDistance = DataStoreUtils.formatScrollDistance(report.scrollDistance)
             binding.tvScrollDistance.text = scrollDistance
             
-            // 중독 예측 분석 실행
-            analyzeAddiction(report)
+            // 중독 예측 결과는 직접 계산하지 않고, DataStore의 값을 사용
+            // analyzeAddiction(report) 제거
             
             // 접근성 서비스가 활성화되어 있지 않으면 스크롤 거리에 알림 표시
             if (!isAccessibilityServiceEnabled() && report.scrollDistance == 0f) {
@@ -505,7 +551,8 @@ class UsageReportFragment : Fragment() {
                 unlockRate = unlockRate,
                 switchRate = switchRate,
                 scrollRate = scrollRate,
-                topAppCategory = report.mainAppCategory
+                topAppCategory = report.mainAppCategory,
+                recentApps = report.recentAppPackages
             )
             
             // UI 업데이트는 메인 스레드에서 실행

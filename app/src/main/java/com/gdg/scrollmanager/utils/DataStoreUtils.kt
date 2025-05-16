@@ -24,6 +24,7 @@ object DataStoreUtils {
     // 스크롤 거리 관련 키
     val EXTERNAL_SCROLL_KEY = floatPreferencesKey("external_scroll_distance")
     val LAST_SCROLL_DISTANCE_KEY = floatPreferencesKey("last_scroll_distance")
+    val RECENT_SCROLL_PIXELS_KEY = intPreferencesKey("recent_scroll_pixels")
     
     // 실시간 사용 데이터 관련 키
     val LATEST_USAGE_REPORT_KEY = stringPreferencesKey("latest_usage_report")
@@ -113,6 +114,20 @@ object DataStoreUtils {
     fun getLastUpdateTimestampFlow(context: Context): Flow<Long> {
         return context.usageDataStore.data.map { preferences ->
             preferences[LAST_UPDATE_TIMESTAMP_KEY] ?: 0L
+        }
+    }
+    
+    // 최근 스크롤 픽셀 값 가져오기
+    suspend fun getRecentScrollPixels(context: Context): Int {
+        return context.scrollDataStore.data.map { preferences ->
+            preferences[RECENT_SCROLL_PIXELS_KEY] ?: 0
+        }.first()
+    }
+    
+    // 최근 스크롤 픽셀 값 저장하기
+    suspend fun saveRecentScrollPixels(context: Context, pixels: Int) {
+        context.scrollDataStore.edit { preferences ->
+            preferences[RECENT_SCROLL_PIXELS_KEY] = pixels
         }
     }
 }

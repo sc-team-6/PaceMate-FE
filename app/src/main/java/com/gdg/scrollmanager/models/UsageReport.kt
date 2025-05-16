@@ -11,5 +11,6 @@ data class UsageReport(
     val averageSessionLength: Float, // 평균 세션 길이 (초)
     val dateTime: String,            // 날짜/시간
     val scrollDistance: Float,       // 스크롤 길이 (단위는 표시에 따라 변환)
-    val appUsageList: List<AppUsageInfo> // 앱별 사용 정보
+    val appUsageList: List<AppUsageInfo>, // 앱별 사용 정보
+    val recentAppPackages: List<String> = emptyList() // 최근 사용한 앱 패키지 목록
 )

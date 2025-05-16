@@ -40,8 +40,8 @@ class UsageDataCollectorService : Service() {
     // 데이터 수집 주기 (5초)
     private val COLLECTION_INTERVAL = 5000L
     
-    // 모델 예측 주기 (15초)
-    private val PREDICTION_INTERVAL = 15000L
+    // 모델 예측 주기 (5초)
+    private val PREDICTION_INTERVAL = 5000L
     
     // ONNX 예측 모델
     private lateinit var phoneUsagePredictor: PhoneUsagePredictor
@@ -257,13 +257,15 @@ class UsageDataCollectorService : Service() {
             val lastScrollDistance = DataStoreUtils.getLastScrollDistance(applicationContext)
             val scrollPixels = ((scrollDistance - lastScrollDistance) * 100).toInt()
             
+            Log.d(TAG, "스크롤 거리 계산: ${scrollDistance - lastScrollDistance}, 스크롤 픽셀: $scrollPixels")
+            
             // 현재 스크롤 거리 저장
             DataStoreUtils.saveLastScrollDistance(applicationContext, scrollDistance)
             
-            return@withContext scrollPixels.coerceAtLeast(0)
+            return@withContext Math.max(0, scrollPixels)  // 음수 값이 나오면 0으로 처리
         } catch (e: Exception) {
             Log.e(TAG, "스크롤 픽셀 계산 오류: ${e.message}")
-            return@withContext 0
+            return@withContext 0  // 오류 발생 시 0 반환
         }
     }
     
@@ -277,6 +279,24 @@ class UsageDataCollectorService : Service() {
                 
                 // 누적된 데이터 집계
                 val modelInput = UsageDataAggregator.aggregateData()
+                
+                // 앱 패키지 목록 가져오기
+                // 최근 5초간 사용된 패키지가 아닌 최근 15분간 가장 많이 사용된 상위 5개 패키지 사용
+                val topPackages = UsageStatsUtils.getTopUsedPackages(applicationContext, 15, 5)
+                Log.d(TAG, "최근 15분 동안 가장 많이 사용된 상위 앱 패키지: ${topPackages.joinToString()}")
+                
+                // 앱 임베딩 계산
+                if (topPackages.isNotEmpty()) {
+                    try {
+                        // 사용자 정의 확장 메소드를 통해 임베딩 계산
+                        val appEmbedding = phoneUsagePredictor.getAverageEmbeddingForPackages(topPackages)
+                        // 임베딩 값 업데이트
+                        modelInput.appEmbedding = appEmbedding
+                        Log.d(TAG, "상위 앱 기반 임베딩 계산 완료: ${appEmbedding.take(3)}...")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "앱 임베딩 계산 오류: ${e.message}")
+                    }
+                }
                 
                 // ONNX 모델 예측 실행
                 val result = predictAddiction(modelInput)

@@ -18,5 +18,5 @@ data class ModelInput(
     val cosHour: Float,               // 시간의 코사인값
     val sinMinute: Float,             // 분의 사인값 
     val cosMinute: Float,             // 분의 코사인값
-    val appEmbedding: List<Float>     // 32차원 앱 임베딩
+    var appEmbedding: List<Float>     // 32차원 앱 임베딩
 )

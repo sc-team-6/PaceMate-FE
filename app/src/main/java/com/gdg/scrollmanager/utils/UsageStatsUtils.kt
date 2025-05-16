@@ -493,6 +493,58 @@ object UsageStatsUtils {
         */
     }
     
+    /**
+     * 최근 상위 사용 앱 패키지 목록 가져오기
+     * @param context 컨텍스트
+     * @param minutesAgo 최근 몇 분 동안의 데이터를 가져올지 (15분 기본값)
+     * @param limit 가져올 앱 개수 (기본값 5)
+     * @return 상위 패키지 목록
+     */
+    fun getTopUsedPackages(context: Context, minutesAgo: Int = 15, limit: Int = 5): List<String> {
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        
+        val endTime = System.currentTimeMillis()
+        val startTime = endTime - (minutesAgo * 60 * 1000)
+        
+        val events = usageStatsManager.queryEvents(startTime, endTime)
+        val event = UsageEvents.Event()
+        
+        // 패키지별 사용 시간 추적
+        val appUsageMap = HashMap<String, Long>()
+        
+        var currentApp = ""
+        var currentStartTime: Long = 0
+        
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            
+            if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
+                currentApp = event.packageName
+                currentStartTime = event.timeStamp
+            } else if (event.eventType == UsageEvents.Event.ACTIVITY_PAUSED && currentApp == event.packageName) {
+                val currentTime = appUsageMap[currentApp] ?: 0L
+                appUsageMap[currentApp] = currentTime + (event.timeStamp - currentStartTime)
+                currentApp = ""
+            }
+        }
+        
+        // 현재 사용 중인 앱이 있으면 현재 시간까지 계산
+        if (currentApp.isNotEmpty() && currentStartTime > 0) {
+            val currentTime = appUsageMap[currentApp] ?: 0L
+            appUsageMap[currentApp] = currentTime + (System.currentTimeMillis() - currentStartTime)
+        }
+        
+        // 런처 패키지 제외 및 사용 시간이 0보다 큰 앱만 필터링
+        return appUsageMap
+            .filter { (packageName, timeInForeground) -> 
+                !isLauncherPackage(packageName) && timeInForeground > 0
+            }
+            .toList()
+            .sortedByDescending { it.second }
+            .take(limit)
+            .map { it.first }
+    }
+    
     // 현재 날짜/시간 포맷
     fun getCurrentDateTime(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
