@@ -39,6 +39,9 @@ class OnboardingPersonalizeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Screen Time 화면이 스킵되었을 때 기본값 설정
+        setDefaultScreenTimeValues()
+        
         // TEMPORARILY COMMENTED OUT - Calendar access button click handler
         // Calendar permissions request functionality removed temporarily
         /* 
@@ -72,6 +75,27 @@ class OnboardingPersonalizeFragment : Fragment() {
         btnLater.setOnClickListener {
             // "Prev" 버튼은 이전 화면으로 돌아가기
             (activity as? OnboardingActivity)?.goToPreviousPage()
+        }
+    }
+    
+    // Screen Time 화면에서 설정했어야 하는 기본값을 설정하는 함수
+    private fun setDefaultScreenTimeValues() {
+        val sharedPref = requireActivity().getSharedPreferences("MyAppPrefs", 0)
+        
+        // 이미 값이 설정되어 있는지 확인
+        val hasScreenTimeSettings = sharedPref.contains("screen_time")
+        
+        // 값이 설정되어 있지 않다면 기본값 설정
+        if (!hasScreenTimeSettings) {
+            with(sharedPref.edit()) {
+                // 기본값: "5-7 hours"
+                putString("screen_time", "5_to_7")
+                // 기본값: "Social Media"
+                putString("reduce_usage", "social_media")
+                // 기본값: "A little"
+                putString("reduce_amount", "a_little")
+                apply()
+            }
         }
     }
     

@@ -37,6 +37,9 @@ class OnboardingUsageFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // Personalize 화면 스킵에 따른 기본값 설정
+        setDefaultPersonalizeValues()
+        
         // 사용자 응답을 기반으로 threshold 계산
         calculateAlertThreshold()
         
@@ -47,6 +50,28 @@ class OnboardingUsageFragment : Fragment() {
             // 설정된 임계값 저장
             saveAlertThreshold()
             (activity as? OnboardingActivity)?.finishOnboarding()
+        }
+    }
+    
+    /**
+     * Personalize 화면에서 설정했어야 하는 기본값을 설정하는 함수
+     */
+    private fun setDefaultPersonalizeValues() {
+        val sharedPref = requireActivity().getSharedPreferences("MyAppPrefs", 0)
+        
+        // 수면 시간 설정이 있는지 확인
+        val hasSleepSettings = sharedPref.contains("sleep_time") && sharedPref.contains("wake_time")
+        
+        // 값이 설정되어 있지 않다면 기본값 설정
+        if (!hasSleepSettings) {
+            with(sharedPref.edit()) {
+                // 기본 수면 시간: 오후 11시 ~ 오전 7시
+                putString("sleep_time", "23:00")
+                putString("wake_time", "07:00")
+                // 기본적으로 캘린더 접근 허용하지 않음
+                putBoolean("calendar_access", false)
+                apply()
+            }
         }
     }
     
@@ -64,7 +89,7 @@ class OnboardingUsageFragment : Fragment() {
         // 3. 줄이고 싶은 정도 
         val reduceAmount = sharedPref.getString("reduce_amount", "a_little") ?: "a_little"
         // 4. 수면 시간 (있다면)
-        val sleepStart = sharedPref.getString("sleep_time", "22:00") ?: "22:00"
+        val sleepStart = sharedPref.getString("sleep_time", "23:00") ?: "23:00"
         val sleepEnd = sharedPref.getString("wake_time", "07:00") ?: "07:00"
         
         // 기본 임계값: 60%

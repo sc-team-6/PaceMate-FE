@@ -94,6 +94,12 @@ dependencies {
     
     // Google AI SDK for Gemma models
     implementation("com.google.ai.client.generativeai:generativeai:0.2.2")
+    
+    // Retrofit 및 OkHttp 추가
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
     // Test 의존성
     testImplementation(libs.junit)
