@@ -1,6 +1,7 @@
 package com.gdg.scrollmanager.utils
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -9,6 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.gdg.scrollmanager.models.UsageReport
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -124,6 +126,67 @@ object DataStoreUtils {
         return context.usageDataStore.data.map { preferences ->
             preferences[LAST_UPDATE_TIMESTAMP_KEY] ?: 0L
         }
+    }
+    
+    // 최근 사용한 앱 패키지 목록 키
+    val RECENT_APPS_KEY = stringPreferencesKey("recent_apps_packages")
+    
+    // 최근 사용한 앱 패키지 목록 저장
+    suspend fun saveRecentApps(context: Context, packages: List<String>) {
+        try {
+            // 패키지 목록을 JSON 문자열로 변환
+            val packagesJson = gson.toJson(packages)
+            Log.d("DataStoreUtils", "최근 앱 패키지 저장: ${packages.joinToString()}")
+            
+            context.usageDataStore.edit { preferences ->
+                preferences[RECENT_APPS_KEY] = packagesJson
+                preferences[LAST_UPDATE_TIMESTAMP_KEY] = System.currentTimeMillis()
+            }
+        } catch (e: Exception) {
+            Log.e("DataStoreUtils", "최근 앱 저장 오류: ${e.message}")
+        }
+    }
+    
+    // 최근 사용한 앱 패키지 목록 가져오기
+    fun getRecentAppsFlow(context: Context): Flow<List<String>> {
+        return context.usageDataStore.data.map { preferences ->
+            val packagesJson = preferences[RECENT_APPS_KEY]
+            if (packagesJson != null) {
+                try {
+                    val type = object : TypeToken<List<String>>() {}.type
+                    val packages = gson.fromJson<List<String>>(packagesJson, type)
+                    Log.d("DataStoreUtils", "최근 앱 패키지 로드됨: ${packages.joinToString()}")
+                    packages
+                } catch (e: Exception) {
+                    Log.e("DataStoreUtils", "최근 앱 패키지 파싱 오류: ${e.message}")
+                    emptyList()
+                }
+            } else {
+                Log.d("DataStoreUtils", "저장된 최근 앱 패키지 없음")
+                emptyList()
+            }
+        }
+    }
+    
+    // 최근 사용한 앱 패키지 목록 가져오기 (동기 버전)
+    suspend fun getRecentApps(context: Context): List<String> {
+        return context.usageDataStore.data.map { preferences ->
+            val packagesJson = preferences[RECENT_APPS_KEY]
+            if (packagesJson != null) {
+                try {
+                    val type = object : TypeToken<List<String>>() {}.type
+                    val packages = gson.fromJson<List<String>>(packagesJson, type)
+                    Log.d("DataStoreUtils", "최근 앱 패키지 로드됨 (동기): ${packages.joinToString()}")
+                    packages
+                } catch (e: Exception) {
+                    Log.e("DataStoreUtils", "최근 앱 패키지 파싱 오류 (동기): ${e.message}")
+                    emptyList()
+                }
+            } else {
+                Log.d("DataStoreUtils", "저장된 최근 앱 패키지 없음 (동기)")
+                emptyList()
+            }
+        }.first()
     }
     
     // 최근 스크롤 픽셀 값 가져오기

@@ -59,6 +59,27 @@ class PhoneUsagePredictor(private val context: Context) {
             e.printStackTrace()
             appEmbeddings = emptyMap()
         }
+        
+        // DataStore에서 저장된 최근 앱 목록 확인
+        try {
+            val runnable = Runnable {
+                try {
+                    val recentApps = kotlinx.coroutines.runBlocking { 
+                        com.gdg.scrollmanager.utils.DataStoreUtils.getRecentApps(context) 
+                    }
+                    if (recentApps.isNotEmpty()) {
+                        Log.d(TAG, "DataStore에서 최근 앱 목록 로드 성공: ${recentApps.joinToString()}")
+                    } else {
+                        Log.d(TAG, "DataStore에 저장된 최근 앱 목록 없음")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "DataStore에서 최근 앱 목록 로드 실패: ${e.message}")
+                }
+            }
+            Thread(runnable).start()
+        } catch (e: Exception) {
+            Log.e(TAG, "DataStore 접근 오류: ${e.message}")
+        }
     }
     
     /**
@@ -81,6 +102,11 @@ class PhoneUsagePredictor(private val context: Context) {
      * @return 평균 임베딩 벡터, 일치하는 임베딩이 없으면 0 벡터
      */
     private fun averageEmbedding(packages: List<String>, dim: Int = 32): List<Float> {
+        if (packages.isEmpty()) {
+            Log.d(TAG, "패키지 목록이 비어있어 기본 임베딩 사용")
+            return getDefaultEmbedding("Unknown")
+        }
+        
         Log.d(TAG, "평균 임베딩 계산 시도 - 패키지 목록: ${packages.joinToString()}")
         val vectors = packages.mapNotNull { pkg -> 
             val emb = appEmbeddings[pkg]
@@ -95,15 +121,108 @@ class PhoneUsagePredictor(private val context: Context) {
         Log.d(TAG, "일치하는 임베딩 수: ${vectors.size}/${packages.size}")
         
         if (vectors.isEmpty()) {
-            Log.d(TAG, "일치하는 임베딩이 없어 기본값 0 벡터 사용")
-            return List(dim) { 0f }
+            val category = getCategoryForTopPackage(packages.firstOrNull() ?: "")
+            Log.d(TAG, "일치하는 임베딩이 없어 카테고리 기반 임베딩 사용: $category")
+            return getDefaultEmbedding(category)
         }
 
         val result = List(dim) { i ->
             vectors.map { it[i] }.average().toFloat()
         }
-        Log.d(TAG, "평균 임베딩 계산 완료: [${result.take(32).joinToString()}...]")
+        Log.d(TAG, "평균 임베딩 계산 완료: [${result.take(5).joinToString()}...]")
         return result
+    }
+    
+    /**
+     * 기본 임베딩 생성 (카테고리 기반)
+     */
+    private fun getDefaultEmbedding(category: String): List<Float> {
+        Log.d(TAG, "카테고리로 기본 임베딩 생성: $category")
+        return when (category) {
+            "Social" -> List(32) { 0.8f }
+            "Games" -> List(32) { 0.6f }
+            "Entertainment" -> List(32) { 0.7f }
+            "Utility" -> List(32) { 0.3f }
+            "Productivity" -> List(32) { 0.2f }
+            "Communication" -> List(32) { 0.5f }
+            "Education" -> List(32) { 0.1f }
+            else -> List(32) { 0.4f }
+        }
+    }
+    
+    /**
+     * 패키지 이름으로 카테고리 추측
+     */
+    private fun getCategoryForTopPackage(packageName: String): String {
+        if (packageName.isEmpty()) return "Unknown"
+        
+        return when {
+            packageName.contains("facebook") || 
+            packageName.contains("instagram") || 
+            packageName.contains("twitter") || 
+            packageName.contains("snapchat") ||
+            packageName.contains("tiktok") ||
+            packageName.contains("musically") ||
+            packageName.contains("kakao") || 
+            packageName.contains("pinterest") ||
+            packageName.contains("linkedin") ||
+            packageName.contains("reddit") ||
+            packageName.contains("discord") ||
+            packageName.contains("telegram") ||
+            packageName.contains("whatsapp") ||
+            packageName.contains("line.android") ||
+            packageName.contains("youtube") -> "Social"  // 유튜브를 소셜로 포함
+            
+            packageName.contains("game") || 
+            packageName.contains("games") ||
+            packageName.contains("play.games") -> "Games"
+            
+            packageName.contains("chrome") || 
+            packageName.contains("browser") || 
+            packageName.contains("firefox") ||
+            packageName.contains("internet") -> "Browser"
+            
+            packageName.contains("music") || 
+            packageName.contains("spotify") ||
+            packageName.contains("player") ||
+            packageName.contains("audio") ||
+            packageName.contains("netflix") ||
+            packageName.contains("hulu") ||
+            packageName.contains("disney") ||
+            packageName.contains("video") -> "Entertainment"
+            
+            packageName.contains("mail") || 
+            packageName.contains("gmail") ||
+            packageName.contains("outlook") ||
+            packageName.contains("message") -> "Communication"
+            
+            packageName.contains("map") || 
+            packageName.contains("naver") || 
+            packageName.contains("gps") ||
+            packageName.contains("navigation") -> "Navigation"
+            
+            packageName.contains("office") ||
+            packageName.contains("docs") ||
+            packageName.contains("sheets") ||
+            packageName.contains("slides") ||
+            packageName.contains("word") ||
+            packageName.contains("excel") ||
+            packageName.contains("powerpoint") -> "Productivity"
+            
+            packageName.contains("camera") ||
+            packageName.contains("photo") ||
+            packageName.contains("gallery") -> "Photography"
+            
+            packageName.contains("news") ||
+            packageName.contains("magazine") -> "News"
+            
+            packageName.contains("shop") ||
+            packageName.contains("store") ||
+            packageName.contains("amazon") ||
+            packageName.contains("ebay") -> "Shopping"
+            
+            else -> "Unknown"
+        }
     }
 
     /**
@@ -162,6 +281,24 @@ class PhoneUsagePredictor(private val context: Context) {
         recentApps: List<String> = emptyList() // 최근 사용한 앱 패키지 목록
     ): Pair<FloatArray, Int> {
         
+        // DataStore에서 최근 앱 목록 가져오기 (recentApps가 비어있는 경우)
+        var appsToUse = recentApps
+        if (appsToUse.isEmpty()) {
+            try {
+                val storedApps = kotlinx.coroutines.runBlocking { 
+                    com.gdg.scrollmanager.utils.DataStoreUtils.getRecentApps(context) 
+                }
+                if (storedApps.isNotEmpty()) {
+                    Log.d(TAG, "DataStore에서 최근 앱 목록 사용: ${storedApps.joinToString()}")
+                    appsToUse = storedApps
+                } else {
+                    Log.d(TAG, "DataStore에 저장된 최근 앱 목록 없음, 빈 목록 사용")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "DataStore에서 최근 앱 목록 로드 실패: ${e.message}")
+            }
+        }
+        
         // 기존 입력 형식을 새 모델 입력 형식으로 변환
         val sinHour = kotlin.math.sin(2 * kotlin.math.PI * hour / 24).toFloat()
         var cosHour = kotlin.math.cos(2 * kotlin.math.PI * hour / 24).toFloat()
@@ -184,23 +321,14 @@ class PhoneUsagePredictor(private val context: Context) {
         }
         
         // 앱 임베딩 계산
-        Log.d(TAG, "앱 임베딩 계산 시작 - 최근 사용 앱: ${recentApps.joinToString()}")
-        val appEmb = if (recentApps.isNotEmpty()) {
+        Log.d(TAG, "앱 임베딩 계산 시작 - 최근 사용 앱: ${appsToUse.joinToString()}")
+        val appEmb = if (appsToUse.isNotEmpty()) {
             // 여러 앱의 평균 임베딩 계산
-            averageEmbedding(recentApps)
+            averageEmbedding(appsToUse)
         } else if (topAppCategory.isNotEmpty()) {
             // 단일 앱 카테고리만 있는 경우 임베딩에 임의의 값 설정
             Log.d(TAG, "앱 패키지 없음, 카테고리로 기본 임베딩 생성: $topAppCategory")
-            when (topAppCategory) {
-                "Social" -> List(32) { 0.8f }
-                "Games" -> List(32) { 0.6f }
-                "Entertainment" -> List(32) { 0.7f }
-                "Utility" -> List(32) { 0.3f }
-                "Productivity" -> List(32) { 0.2f }
-                "Communication" -> List(32) { 0.5f }
-                "Education" -> List(32) { 0.1f }
-                else -> List(32) { 0.4f }
-            }
+            getDefaultEmbedding(topAppCategory)
         } else {
             // 기본값: 0 벡터
             Log.d(TAG, "앱 정보 없음, 기본 0 벡터 사용")

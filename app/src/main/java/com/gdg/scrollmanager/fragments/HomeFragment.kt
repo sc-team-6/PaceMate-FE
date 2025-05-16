@@ -388,6 +388,9 @@ class HomeFragment : Fragment() {
                 addAppUsageItem(app)
             }
             
+            // 상위 앱 패키지 목록을 DataStore에 저장 (예측 모델에서 사용)
+            saveTopAppPackages(sortedApps)
+            
             Log.d("HomeFragment", "Loaded ${sortedApps.size} apps usage data")
         } catch (e: Exception) {
             Log.e("HomeFragment", "Error loading app usage data: ${e.message}")
@@ -396,6 +399,27 @@ class HomeFragment : Fragment() {
             // 에러 발생 시 메시지 표시
             binding.tvNoAppData.visibility = View.VISIBLE
             binding.tvNoAppData.text = "앱 사용 데이터를 가져오는 중 오류가 발생했습니다."
+        }
+    }
+    
+    /**
+     * 상위 앱 패키지 목록을 DataStore에 저장합니다.
+     */
+    private fun saveTopAppPackages(apps: List<AppUsageInfo>) {
+        if (apps.isEmpty()) return
+        
+        // 패키지 목록 추출
+        val packagesList = apps.map { it.packageName }
+        
+        // 코루틴으로 DataStore에 저장
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // 패키지 목록 저장
+                DataStoreUtils.saveRecentApps(requireContext(), packagesList)
+                Log.d("HomeFragment", "상위 앱 패키지 목록 저장 완료: ${packagesList.joinToString()}")
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "상위 앱 패키지 저장 실패: ${e.message}")
+            }
         }
     }
     

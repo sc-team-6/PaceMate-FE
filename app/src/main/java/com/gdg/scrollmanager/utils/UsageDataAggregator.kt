@@ -150,7 +150,7 @@ object UsageDataAggregator {
                 Log.d(TAG, "60분 실제 데이터 사용: 화면 켜짐 ${screenSeconds60Min}초")
             } else {
                 // 60분 기본 추정값: 12분
-                screenSeconds60Min = 720
+                screenSeconds60Min = 600
                 Log.d(TAG, "60분 추정 데이터 사용: 화면 켜짐 ${screenSeconds60Min}초 (5분 데이터의 12배)")
             }
             

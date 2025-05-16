@@ -23,9 +23,17 @@ class AppUsageAdapter : ListAdapter<AppUsageInfo, AppUsageAdapter.AppUsageViewHo
     class AppUsageViewHolder(private val binding: ItemAppUsageBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(appUsageInfo: AppUsageInfo) {
             binding.appNameText.text = appUsageInfo.appName
-            binding.packageNameText.text = appUsageInfo.packageName
             binding.usageTimeText.text = formatTime(appUsageInfo.timeInForeground)
-            binding.colorIndicator.setBackgroundColor(appUsageInfo.color)
+            
+            // 앱 아이콘 설정 (이미 생성된 컬러 사용)
+            try {
+                val packageManager = itemView.context.packageManager
+                val appIcon = packageManager.getApplicationIcon(appUsageInfo.packageName)
+                binding.appIcon.setImageDrawable(appIcon)
+            } catch (e: Exception) {
+                // 아이콘을 가져올 수 없는 경우 기본 색상 사용
+                binding.appIcon.setBackgroundColor(appUsageInfo.color)
+            }
         }
 
         private fun formatTime(timeInMillis: Long): String {
