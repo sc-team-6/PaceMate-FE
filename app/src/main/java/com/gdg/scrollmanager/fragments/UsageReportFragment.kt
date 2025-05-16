@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import com.gdg.scrollmanager.utils.DataStoreUtils
+import com.gdg.scrollmanager.utils.UsageDataAggregator
 import com.gdg.scrollmanager.utils.UsageStatsUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -87,7 +88,8 @@ class UsageReportFragment : Fragment() {
     
     override fun onResume() {
         super.onResume()
-        startAutoRefresh()
+        refreshData() // 화면 다시 열릴 때 데이터 갱신
+        startAutoRefresh() // 자동 새로고침 시작
     }
     
     override fun onDestroyView() {
@@ -194,7 +196,7 @@ class UsageReportFragment : Fragment() {
             
             // 제목
             Text(
-                text = "Usage Report",
+                text = "Usage Alert",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -243,7 +245,7 @@ class UsageReportFragment : Fragment() {
                     }
                 }
                 
-                // 오른쪽 카드 (스크롤 길이)
+                // 오른쪽 카드 (스크롤 레이트)
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -253,7 +255,7 @@ class UsageReportFragment : Fragment() {
                 ) {
                     Column {
                         Text(
-                            text = "Scroll Activity",
+                            text = "Scroll Rate",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -261,7 +263,7 @@ class UsageReportFragment : Fragment() {
                         Spacer(modifier = Modifier.height(8.dp))
                         
                         Text(
-                            text = "${reportData.scrollPixels}",
+                            text = "${reportData.scrollRate.toInt()}",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF6AB9A3)
@@ -270,15 +272,7 @@ class UsageReportFragment : Fragment() {
                         Spacer(modifier = Modifier.height(4.dp))
                         
                         Text(
-                            text = "pixels",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Text(
-                            text = "Rate: ${String.format("%.1f", reportData.scrollRate)} px/sec",
+                            text = "px/sec",
                             fontSize = 14.sp,
                             color = Color.Gray
                         )
@@ -392,36 +386,23 @@ class UsageReportFragment : Fragment() {
                 // 2. 스크롤 픽셀
                 val scrollPixels = DataStoreUtils.getRecentScrollPixels(context)
                 
-                // 접근성 서비스가 활성화되어 있지 않아 스크롤 데이터가 0인 경우 테스트 값 설정
-                val actualScrollPixels = if (scrollPixels <= 100) {
-                    // 테스트용 더미 데이터 - UsageDataCollectorService에서 스크롤 픽셀 값 탐지
-                    10000
-                } else {
-                    scrollPixels
-                }
+                // 3. 스크롤 레이트 - UsageDataAggregator에서 모델 입력 가져오는 방법으로 변경
+                // 이 방식은 PhoneUsagePredictor에서 사용하는 것과 동일합니다
+                val modelInput = UsageDataAggregator.aggregateData()
+                val scrollRate = modelInput.scrollRate
                 
-                // 테스트용 스크롤 값 저장
-                if (scrollPixels <= 100) {
-                    // DataStore에 테스트 값 저장
-                    DataStoreUtils.saveRecentScrollPixels(context, actualScrollPixels)
-                }
+                // 스크롤 레이트 로그 출력 (디버깅용)
+                Log.d(TAG, "ModelInput으로부터 스크롤 레이트: $scrollRate (PhoneUsagePredictor와 동일한 값)")
                 
-                // 스크롤 레이트 계산 (초당 스크롤 픽셀)
-                val scrollRate = if (screenTimeMinutes > 0) {
-                    actualScrollPixels.toFloat() / (screenTimeMinutes * 60)
-                } else {
-                    0f
-                }
-                
-                // 3. 화면 잠금해제 횟수
+                // 4. 화면 잠금해제 횟수
                 val unlockCount = UsageStatsUtils.getUnlockCount(context, timeFrame)
                 
-                // 4. 앱 전환 횟수
+                // 5. 앱 전환 횟수
                 val appSwitchCount = UsageStatsUtils.getAppSwitchCount(context, timeFrame)
                 
                 UsageReportData(
                     screenTimeMinutes = screenTimeMinutes,
-                    scrollPixels = actualScrollPixels,
+                    scrollPixels = scrollPixels,
                     scrollRate = scrollRate,
                     unlockCount = unlockCount,
                     appSwitchCount = appSwitchCount
