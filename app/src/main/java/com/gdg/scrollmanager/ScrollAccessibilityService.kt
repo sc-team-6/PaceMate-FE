@@ -26,10 +26,20 @@ class ScrollAccessibilityService : AccessibilityService() {
 
     private fun addScrollDistanceToDataStore(amount: Float) {
         CoroutineScope(Dispatchers.IO).launch {
-            // 기존 키 대신 DataStoreUtils에 정의된 키 사용
-            applicationContext.scrollDataStore.edit { preferences ->
-                val current = preferences[DataStoreUtils.EXTERNAL_SCROLL_KEY] ?: 0f
-                preferences[DataStoreUtils.EXTERNAL_SCROLL_KEY] = current + amount
+            try {
+                // 1. 총 스크롤 거리 업데이트
+                applicationContext.scrollDataStore.edit { preferences ->
+                    val current = preferences[DataStoreUtils.EXTERNAL_SCROLL_KEY] ?: 0f
+                    preferences[DataStoreUtils.EXTERNAL_SCROLL_KEY] = current + amount
+                }
+                
+                // 2. 최근 스크롤 픽셀 값 업데이트
+                val currentPixels = DataStoreUtils.getRecentScrollPixels(applicationContext)
+                val newPixels = currentPixels + (amount * 100).toInt()
+                DataStoreUtils.saveRecentScrollPixels(applicationContext, newPixels)
+                Log.d("ScrollService", "스크롤 픽셀 업데이트됨: $currentPixels → $newPixels")
+            } catch (e: Exception) {
+                Log.e("ScrollService", "스크롤 데이터 저장 오류: ${e.message}")
             }
         }
     }

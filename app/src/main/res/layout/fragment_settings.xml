@@ -12,8 +12,9 @@
         android:text="Settings"
         android:textSize="24sp"
         android:textStyle="bold"
+        android:textColor="@color/mint_text"
         android:layout_marginBottom="24dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="40dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

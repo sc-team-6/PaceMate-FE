@@ -507,14 +507,11 @@ class AlertFragment : Fragment() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(50.dp))
-
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             // 제목
             Text(
@@ -522,6 +519,7 @@ class AlertFragment : Fragment() {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
+                color = Color(0xFF6AB9A3), // mint_text 색상
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -579,11 +577,12 @@ class AlertFragment : Fragment() {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(horizontal = 16.dp)
+                    .weight(1f) // 남은 공간을 다 차지하도록 설정
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color(0xFFF5F5F5))
-                    .padding(24.dp)
-                    .height(250.dp) // 고정 높이로 설정
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -642,7 +641,7 @@ class AlertFragment : Fragment() {
                             }
                         }
                     } else {
-                        // 스크롤 가능한 텍스트 영역 (남은 공간 모두 채우기)
+                        // 스크롤 가능한 텍스트 영역
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -664,18 +663,14 @@ class AlertFragment : Fragment() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             // 도움말 텍스트
             Text(
                 text = "We analyzed your digital usage patterns to calculate addiction probability. Get personalized advice for healthy digital life.",
                 fontSize = 14.sp,
                 color = Color.Gray,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 
