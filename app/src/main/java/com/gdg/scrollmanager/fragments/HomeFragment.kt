@@ -39,6 +39,9 @@ class HomeFragment : Fragment() {
     private var minScore: Int = 0
     private var maxScore: Int = 0
     
+    // 프리퍼런스 매니저 참조
+    private lateinit var prefManager: PreferenceManager
+    
     // 5초마다 데이터를 갱신하기 위한 핸들러
     private val handler = Handler(Looper.getMainLooper())
     private var updateRunnable: Runnable? = null
@@ -81,7 +84,7 @@ class HomeFragment : Fragment() {
      */
     private fun loadAlertThreshold() {
         // PreferenceManager 인스턴스 생성
-        val prefManager = PreferenceManager(requireContext())
+        prefManager = PreferenceManager(requireContext())
         
         // 저장된 알림 임계값을 가져옴
         alertThresholdValue = prefManager.getAlertThreshold()
@@ -105,15 +108,23 @@ class HomeFragment : Fragment() {
                 
                 Log.d("HomeFragment", "Loaded addiction probability: $probability%")
                 
+                // 항상 최소/최대값 업데이트 먼저 수행
+                // 현재 스코어가 변경되기 전에 먼저 최소/최대값 업데이트
+                prefManager.updateMinScore24h(probability)
+                prefManager.updateMaxScore24h(probability)
+                
                 // 현재 스코어 값 업데이트
                 if (probability != currentScoreValue) {
                     val oldValue = currentScoreValue
                     currentScoreValue = probability
                     
-                    // UI가 이미 초기화되었다면 업데이트
-                    if (_binding != null && arcProgressView != null) {
+                    // UI가 이미 초기화되었고 Fragment가 여전히 활성 상태인지 확인
+                    if (_binding != null && isAdded && view != null) {
                         updateUIWithNewScore(oldValue, probability)
                     }
+                } else {
+                    // 값이 변경되지 않았더라도 MIN/MAX 표시는 업데이트
+                    updateMinMaxDisplay()
                 }
             } catch (e: Exception) {
                 Log.e("HomeFragment", "Error loading addiction probability: ${e.message}")
@@ -125,9 +136,47 @@ class HomeFragment : Fragment() {
     }
     
     /**
+     * 최소/최대 표시만 업데이트합니다 (현재 값 변경 없이)
+     */
+    private fun updateMinMaxDisplay() {
+        if (_binding == null) return
+        
+        // 저장된 최소/최대 값 가져오기
+        val newMinScore = prefManager.getMinScore24h(currentScoreValue)
+        val newMaxScore = prefManager.getMaxScore24h(currentScoreValue)
+        
+        // 값이 변경되었으면 UI 업데이트
+        if (newMinScore != minScore) {
+            try {
+                val currentMinText = binding.tvMin.text.toString().replace("%", "")
+                val currentMinValue = if (currentMinText.isEmpty()) 0 else currentMinText.toInt()
+                animateTextValue(binding.tvMin, currentMinValue, newMinScore, "%")
+                minScore = newMinScore
+                Log.d("HomeFragment", "Updated minScore display: $minScore")
+            } catch (e: Exception) {
+                binding.tvMin.text = "$newMinScore%"
+            }
+        }
+        
+        if (newMaxScore != maxScore) {
+            try {
+                val currentMaxText = binding.tvMax.text.toString().replace("%", "")
+                val currentMaxValue = if (currentMaxText.isEmpty()) 0 else currentMaxText.toInt()
+                animateTextValue(binding.tvMax, currentMaxValue, newMaxScore, "%")
+                maxScore = newMaxScore
+                Log.d("HomeFragment", "Updated maxScore display: $maxScore")
+            } catch (e: Exception) {
+                binding.tvMax.text = "$newMaxScore%"
+            }
+        }
+    }
+    
+    /**
      * 새 스코어 값으로 UI를 업데이트합니다.
      */
     private fun updateUIWithNewScore(oldValue: Int, newValue: Int) {
+        if (_binding == null) return  // binding이 null이면 실행하지 않음
+        
         // 상태 텍스트 및 색상 결정 (현재 Overrun Score 기준)
         val (statusText, colorHex) = when {
             newValue <= 33 -> "Cruising Mode" to "#76F376" // 초록
@@ -135,8 +184,8 @@ class HomeFragment : Fragment() {
             else -> "Overrun Point" to "#C42727"           // 빨강
         }
 
-        // 현재 Overrun Score 텍스트 업데이트
-        binding.tvPercentage.text = "$newValue%"
+        // 현재 Overrun Score 텍스트 업데이트 (애니메이션)
+        animateTextValue(binding.tvPercentage, oldValue, newValue, "%")
         binding.tvStatus.text = statusText
 
         // 상태 텍스트 배경 둥글게 설정
@@ -172,6 +221,11 @@ class HomeFragment : Fragment() {
                 duration = 1000L
                 interpolator = DecelerateInterpolator()
                 addUpdateListener {
+                    if (_binding == null) {
+                        // 애니메이션 도중에 binding이 null이 되었으면 애니메이션 취소
+                        cancel()
+                        return@addUpdateListener
+                    }
                     arcView.percentage = (it.animatedValue as Float)
                 }
                 start()
@@ -183,19 +237,84 @@ class HomeFragment : Fragment() {
     }
     
     /**
+     * 텍스트 값을 애니메이션으로 변경합니다.
+     * binding이 null이 아닌지 확인하여 안전하게 처리합니다.
+     */
+    private fun animateTextValue(textView: View, startValue: Int, endValue: Int, suffix: String = "") {
+        if (_binding == null) return  // binding이 null이면 실행하지 않음
+        
+        ValueAnimator.ofInt(startValue, endValue).apply {
+            duration = 1000
+            interpolator = DecelerateInterpolator()
+            addUpdateListener { animation ->
+                if (_binding == null) {
+                    // 애니메이션 도중에 binding이 null이 되었으면 애니메이션 취소
+                    cancel()
+                    return@addUpdateListener
+                }
+                
+                val value = animation.animatedValue as Int
+                when (textView) {
+                    binding.tvPercentage -> binding.tvPercentage.text = "$value$suffix"
+                    binding.tvMin -> binding.tvMin.text = "$value$suffix"
+                    binding.tvMax -> binding.tvMax.text = "$value$suffix"
+                }
+            }
+            start()
+        }
+    }
+    
+    /**
      * 최소값과 최대값을 조정하고 표시합니다.
+     * 24시간 내의 최소/최대값을 유지합니다.
      */
     private fun updateMinMaxValues(currentValue: Int) {
-        // 앱이 재시작되었을 때마다 최소/최대값 및 최근 값이 초기화됨
-        // 현재 값을 최소값과 최대값으로 사용
-        if (minScore == 0 || currentValue < minScore) {
-            minScore = currentValue
-            binding.tvMin.text = "$minScore%"
+        if (_binding == null) return  // binding이 null이면 실행하지 않음
+        
+        Log.d("HomeFragment", "updateMinMaxValues - Current: $currentValue, Min: $minScore, Max: $maxScore")
+        
+        // 24시간 동안의 최소/최대 값 업데이트 (SharedPreferences에 저장)
+        // 이미 loadAddictionProbability에서 수행했으므로 여기서는 결과만 확인
+        val minChanged = prefManager.updateMinScore24h(currentValue)
+        val maxChanged = prefManager.updateMaxScore24h(currentValue)
+        
+        // 저장된 최소/최대 값 가져오기
+        val newMinScore = prefManager.getMinScore24h(currentValue) 
+        val newMaxScore = prefManager.getMaxScore24h(currentValue)
+        
+        // UI 업데이트 (값이 변경되었거나 표시에 차이가 있는 경우만)
+        if (minChanged || newMinScore != minScore) {
+            try {
+                val currentMinText = binding.tvMin.text.toString().replace("%", "")
+                val currentMinValue = if (currentMinText.isEmpty()) 0 else currentMinText.toInt()
+                
+                if (currentMinValue != newMinScore) {
+                    Log.d("HomeFragment", "Animating minScore from $currentMinValue to $newMinScore")
+                    animateTextValue(binding.tvMin, currentMinValue, newMinScore, "%")
+                }
+                
+                minScore = newMinScore
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "Error updating min score: ${e.message}")
+                binding.tvMin.text = "$newMinScore%"
+            }
         }
         
-        if (currentValue > maxScore) {
-            maxScore = currentValue
-            binding.tvMax.text = "$maxScore%"
+        if (maxChanged || newMaxScore != maxScore) {
+            try {
+                val currentMaxText = binding.tvMax.text.toString().replace("%", "")
+                val currentMaxValue = if (currentMaxText.isEmpty()) 0 else currentMaxText.toInt()
+                
+                if (currentMaxValue != newMaxScore) {
+                    Log.d("HomeFragment", "Animating maxScore from $currentMaxValue to $newMaxScore")
+                    animateTextValue(binding.tvMax, currentMaxValue, newMaxScore, "%")
+                }
+                
+                maxScore = newMaxScore
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "Error updating max score: ${e.message}")
+                binding.tvMax.text = "$newMaxScore%"
+            }
         }
     }
     
@@ -208,13 +327,13 @@ class HomeFragment : Fragment() {
         
         updateRunnable = Runnable {
             // 화면이 표시되고 있는 상태에서만 갱신 실행
-            if (view != null && isAdded) {
+            if (view != null && isAdded && _binding != null) {
                 try {
                     // 중독 확률 데이터 갱신
                     loadAddictionProbability()
                     
                     // 다음 업데이트 예약 (5초 후)
-                    if (isAdded && view != null) { // 추가 안전장치
+                    if (isAdded && view != null && _binding != null) { // 추가 안전장치
                         handler.postDelayed(updateRunnable!!, 5000)
                     } else {
                         stopDataUpdates()
@@ -262,13 +381,21 @@ class HomeFragment : Fragment() {
         // Alert Level 표시
         binding.tvAlertLevel.text = "$alertThresholdValue%"
 
-        // MIN 값 설정 (앱이 재시작되면 초기화)
-        minScore = currentScoreValue
-        binding.tvMin.text = "$minScore%"
-
-        // MAX 값 설정 (최초에는 현재 값으로 초기화)
-        maxScore = currentScoreValue
-        binding.tvMax.text = "$maxScore%"
+        // 현재 값으로 최소/최대값 초기 업데이트 (SharedPreferences에 기록)
+        prefManager.updateMinScore24h(currentScoreValue)
+        prefManager.updateMaxScore24h(currentScoreValue)
+        
+        // 24시간 동안의 최소/최대 값 가져오기
+        minScore = prefManager.getMinScore24h(currentScoreValue)
+        maxScore = prefManager.getMaxScore24h(currentScoreValue)
+        
+        Log.d("HomeFragment", "setupUI - Current: $currentScoreValue, Min: $minScore, Max: $maxScore")
+        
+        // MIN/MAX 값 점진적으로 표시 (애니메이션)
+        binding.tvMin.text = "0%"  // 시작값은 0%로 설정
+        binding.tvMax.text = "0%"
+        animateTextValue(binding.tvMin, 0, minScore, "%")
+        animateTextValue(binding.tvMax, 0, maxScore, "%")
 
         // 상태 텍스트 배경 둥글게 설정
         val statusBg = GradientDrawable().apply {
