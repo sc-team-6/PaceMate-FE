@@ -2,6 +2,9 @@
 
 PaceMate is an Android application that helps users monitor and manage their smartphone usage patterns. It provides real-time insights about screen time, scroll behavior, and app usage to promote healthier digital habits.
 
+<img width="1320" height="1500" alt="image" src="https://github.com/user-attachments/assets/47947339-cb16-401e-9f43-5f0ed06a7fa7" />
+
+
 ## Features
 
 - **Usage Dashboard**: Clear visualization of smartphone usage metrics including screen time, scroll rate, unlock count, and app switches
